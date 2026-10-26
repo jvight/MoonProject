@@ -221,6 +221,7 @@ def build_lander_service_port() -> bpy.types.Object:
     r1kit.create_empty("Socket_Trickle", parent=root, pivot_u=(-0.23, 0.50, -0.20))
     r1kit.create_empty("Readout_Anchor", parent=root, pivot_u=(0.0, 0.83, -0.18))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     # Override ReadoutScreen front face with clean [0, 1] planar UVs so dynamic or baked 2-line text maps 1:1
     apply_screen_planar_uvs(
@@ -368,6 +369,7 @@ def build_lander_beacon() -> bpy.types.Object:
     r1kit.create_empty("Mount_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
     r1kit.create_empty("Light_Anchor", parent=root, pivot_u=(0.0, 0.44, 0.0))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.35)

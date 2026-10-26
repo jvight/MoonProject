@@ -262,6 +262,7 @@ def build_spare_igniter() -> bpy.types.Object:
             v.co.z -= min_z_b
         mesh.update()
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=1.2)
     _map_signage_uvs(root)
     r1kit.bake_vertex_colors(root, footprint_radius=0.14)

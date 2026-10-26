@@ -333,6 +333,7 @@ def build_peak_beacon() -> bpy.types.Object:
     r1kit.create_empty("Dish_Anchor", parent=root, pivot_u=(0.0, 4.40, 0.42))
     r1kit.create_empty("SummitBase_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.10)

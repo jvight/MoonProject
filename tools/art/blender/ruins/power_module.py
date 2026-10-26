@@ -778,6 +778,7 @@ def export_and_render(
     ruins_common.reset_ruins_scene()
     root = build_power_module()
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
     ruins_common.apply_signage_uvs(root)
     ruins_common.bake_ruins_vertex_colors(root, footprint_radius=1.25)
