@@ -82,13 +82,9 @@ namespace MoonProject.Rover
         private readonly CameraMoment _moment = new CameraMoment();
         private NearPropFade _nearFade;
         private readonly GazePan _gazePan = new GazePan();
-        private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly BuildFraming _buildFraming = new BuildFraming();
-        private readonly PendingNudge _pendingNudge = new PendingNudge();
         private readonly FaceCloseSequence _faceClose = new FaceCloseSequence();
         private FaceCloseDip _faceCloseDip;
-        private readonly TurnSettle _turnSettle = new TurnSettle();
-        private bool _driveCarriedIntoNudge;
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
@@ -283,7 +279,6 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
-                context.Events.Subscribe<NextStepChanged>(OnNextStepChanged),
                 context.Events.Subscribe<PartFitted>(OnPartFitted),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
@@ -517,15 +512,7 @@ namespace MoonProject.Rover
                 _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
-            if (!driving)
-            {
-                _driveCarriedIntoNudge = false;
-            }
-
-            // A drive key already held when a nudge began (the player is driving off the pad as the line appears)
-            // must not end it before it has turned; the next press, or any look input, does.
-            bool carried = IsNudgeMoment && _driveCarriedIntoNudge;
-            if (driving && !carried && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
+            if (driving && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
@@ -539,8 +526,6 @@ namespace MoonProject.Rover
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
-            _turnSettle.Step(RoverYaw(), deltaTime, _tuning.NudgeTurnRate, _tuning.NudgeTurnSettleSeconds);
-            StepPendingNudge();
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
@@ -681,9 +666,8 @@ namespace MoonProject.Rover
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
-                    float baseYaw = IsNudgeMoment ? roverYaw + _orbitState.YawOffset : roverYaw;
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
-                    yaw = Mathf.DeltaAngle(baseYaw, CameraMoment.BlendYaw(moment, baseYaw, subjectYaw, reach));
+                    yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
                     _momentYaw -= turned * moment.YawShare * Mathf.Clamp01(reach);
                 }
 
@@ -1000,21 +984,15 @@ namespace MoonProject.Rover
             return _look.OrbitDegrees(mouse, _input.LookRate, deltaTime);
         }
 
-        private bool IsNudgeMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.NudgeMoment);
-
         /// <summary>
         /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
         /// work's framing; <paramref name="yaw"/> is from 07's heading.
         /// </summary>
         private void ChaseOrbit(out float yaw, out float elevation, out float radius)
         {
-            yaw = IsNudgeMoment ? _orbitState.YawOffset : _orbitState.YawOffset * (1f - _moment.Weight);
+            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
                 - _crawl * _tuning.CrawlLower + _buildFraming.ElevationOffset;
-            if (IsNudgeMoment && elevation > _tuning.DefaultPitch)
-            {
-                elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
-            }
             radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack) * (1f + _buildFraming.PullBack);
             float cutFrame = _beam.Framing.Weight;
             if (cutFrame > 0f)
@@ -1699,13 +1677,6 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Story showed the next line and its action has a place (G5): if that place is off screen, the camera is nudged
-        /// once toward it, one eased turn with 07 in the foreground, ended by any look or drive input. Only for a line
-        /// that follows a success (not a reminder), never twice for the same target, and nothing happens while another
-        /// shot has the camera (the wake included, so a loaded game's first line never nudges). 07's own head look
-        /// toward the object is Story's chip.
-        /// </summary>
-        /// <summary>
         /// The headlamp fitted live at the rack: the camera swings round to a calm front three-quarter frame of 07's
         /// head (the look direction placed behind 07, so the camera sits in front of it) while the pods clamp and the
         /// lenses warm, and eases back. Never on load: a loaded rack fills without a <see cref="PartFitted"/>. Another
@@ -1728,62 +1699,6 @@ namespace MoonProject.Rover
             _moment.Start(_tuning.LampFitMoment, _rover.Position + behind * _tuning.LampFitSubjectMetres, false);
         }
 
-        private void OnNextStepChanged(NextStepChanged step)
-        {
-            _pendingNudge.Clear();
-            if (!step.HasTarget || step.Reason != NextLineReason.Next)
-            {
-                return;
-            }
-
-            if (!FreeForNudge)
-            {
-                _pendingNudge.Hold(step, Time.time);
-                return;
-            }
-
-            TryNudge(step);
-        }
-
-        // The dock's close frame is an ambient hold that lasts as long as 07 sits on the pad, not a shot to wait out: a
-        // line read on the pad (the charge has just ended) nudges over it, and the dock frame returns afterwards.
-        private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
-                                     _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
-                                     !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive &&
-                                     !_buildFraming.IsActive && _buildFraming.Weight <= 0f && _turnSettle.IsSettled;
-
-        /// <summary>
-        /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as
-        /// that shot lets go, instead of never.
-        /// </summary>
-        private void StepPendingNudge()
-        {
-            if (_pendingNudge.TryRelease(FreeForNudge, Time.time, _tuning.NudgePendingSeconds,
-                    out NextStepChanged step))
-            {
-                TryNudge(step);
-            }
-        }
-
-        private void TryNudge(NextStepChanged step)
-        {
-            // Where the camera actually looks: the dock's close frame swings it round 07, so 07's heading and the
-            // orbit offset alone would call a target the frame has turned away from "near ahead".
-            float looking = _viewCamera.transform.eulerAngles.y;
-            Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
-            if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
-                    _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
-                !_nudge.TryTake(step.TargetId))
-            {
-                return;
-            }
-
-            _gazePan.Begin(_rover.Position, looking, step.TargetPosition, _tuning.NudgeTravelSeconds,
-                _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
-                _tuning.NudgeSlack);
-            _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
-            _driveCarriedIntoNudge = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-        }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
         private void StepReleasePan(float deltaTime)

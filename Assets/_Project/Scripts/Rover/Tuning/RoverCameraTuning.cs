@@ -464,56 +464,6 @@ namespace MoonProject.Rover
         [Range(0.1f, 1.5f)]
         [SerializeField] private float _gazePanHalfLife = 0.5f;
 
-        [Tooltip("The nudge toward the next action's object when it is off screen (G5): one soft eased turn of the camera " +
-                 "toward it, with 07 in the foreground; any look or drive input ends it.")]
-        [SerializeField] private CameraMomentSettings _nudgeMoment =
-            new CameraMomentSettings(1f, 0f, 1.6f, 0f, 0f, 1f, 0f, 180f, 0f, 0f, 100000f);
-
-        [Tooltip("Fastest the nudge turns the camera (deg/s).")]
-        [Range(5f, 40f)]
-        [SerializeField] private float _nudgeSweep = 20f;
-
-        [Tooltip("Seconds the nudge gives the turn toward the object.")]
-        [Range(0.8f, 3f)]
-        [SerializeField] private float _nudgeTravelSeconds = 1.5f;
-
-        [Tooltip("Seconds the nudge holds the object before easing back.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _nudgeHoldSeconds = 0.5f;
-
-        [Tooltip("How far (deg) short of the object's bearing the nudge settles: the object comes into the frame's edge, " +
-                 "not its centre.")]
-        [Range(0f, 50f)]
-        [SerializeField] private float _nudgeSlack = 30f;
-
-        [Tooltip("Furthest (deg) the object may lie from where the camera looks for the camera to turn at all; behind that, " +
-                 "07's head turn carries the look.")]
-        [Range(30f, 180f)]
-        [SerializeField] private float _nudgeMaxBearing = 150f;
-
-        [Tooltip("Seconds a nudge asked for while another shot has the camera waits for it to end, then fires; older than " +
-                 "this it is dropped (the player has moved on).")]
-        [Range(2f, 60f)]
-        [SerializeField] private float _nudgePendingSeconds = 15f;
-
-        [Tooltip("Degrees per second of 07's own turn under which it counts as still: while it turns faster (the in-place " +
-                 "turn on the pad that faces the array) a nudge waits, then looks again where the target is.")]
-        [Range(1f, 60f)]
-        [SerializeField] private float _nudgeTurnRate = 8f;
-
-        [Tooltip("Seconds 07's heading must stay still before a waiting nudge is looked at again.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _nudgeTurnSettleSeconds = 0.3f;
-
-        [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
-        [Range(0f, 40f)]
-        [SerializeField] private float _nudgeMinDistance = 12f;
-
-        [Tooltip("Share of the view's width and height, from each edge, a target must lie inside to count as on screen " +
-                 "(no nudge, no head turn).")]
-        [Range(0f, 0.3f)]
-        [SerializeField] private float _nudgeScreenMargin = 0.08f;
-
         [Tooltip("07 charging on its pad: the camera eases (calm, about 20 deg/s) to a closer three-quarter rear frame " +
                  "where the lamp bar and the clamps read, instead of pulling out to the wide shot, and eases back when " +
                  "the charge ends. Any look or drive input gives control back at once.")]
@@ -1086,28 +1036,6 @@ namespace MoonProject.Rover
         public float ReleasePanRise => _gazePanRise;
 
         public float ReleasePanHalfLife => _gazePanHalfLife;
-
-        public CameraMomentSettings NudgeMoment => _nudgeMoment;
-
-        public float NudgeSweep => _nudgeSweep;
-
-        public float NudgeTravelSeconds => _nudgeTravelSeconds;
-
-        public float NudgeHoldSeconds => _nudgeHoldSeconds;
-
-        public float NudgeSlack => _nudgeSlack;
-
-        public float NudgeMaxBearing => _nudgeMaxBearing;
-
-        public float NudgePendingSeconds => _nudgePendingSeconds;
-
-        public float NudgeTurnRate => _nudgeTurnRate;
-
-        public float NudgeTurnSettleSeconds => _nudgeTurnSettleSeconds;
-
-        public float NudgeMinDistance => _nudgeMinDistance;
-
-        public float NudgeScreenMargin => _nudgeScreenMargin;
 
         public CameraMomentSettings LampFitMoment => _lampFitMoment;
 
