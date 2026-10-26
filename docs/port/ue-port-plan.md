@@ -3,8 +3,16 @@
 > **Status:** draft for the Director, 2026-10-26. Author: tools session. Owner decision (2026-10-26): port to Unreal 5.8;
 > Unity is the **reference build** from now on (bug fixes and port support only, no new features).
 >
+> **Owner principle (2026-10-26):** *"Don't follow exactly what Unity did. Be flexible and develop around Unreal's strengths."*
+> We port the **design intent and the feel rules** (the player-owned camera, one guidance element, purpose must read, zero
+> debt, the gates), **not the Unity implementation**. For each system the default is the **native UE way** (Landscape and
+> PCG, Niagara, MetaSounds, Sequencer, Lumen and Virtual Shadow Maps, CommonUI, Chaos, Enhanced Input, Data Assets and
+> DataTables). We hand-port our own code only where it **is** the feel (07's drive model, the orbit camera, the scan aim,
+> the guidance rules, the range-ring numbers) or where UE has nothing better. Section 4 lists both sets. The owner no
+> longer needs Unity, so this plan assumes the Unity editors are closed.
+>
 > **Design companion:** `docs/design/ue-port-design-notes.md` (GD: eleven design areas mapped to UE tools, what to keep exactly,
-> the risks, and a suggested order). This plan carries its intent; section 4.1 lists its must-keeps with owners.
+> the risks, and a suggested order). This plan carries its intent; section 4.3 lists its must-keeps with owners.
 >
 > **Inputs read:** Rover's spike (`D:/Project/MoonProject-UE/PortSpike/Report/REPORT.md`, `SPIKE_LOG.md`),
 > `docs/ARCHITECTURE.md`, `CLAUDE.md`, `tools/`. The spike measured the toolchain, the pure-logic port, input, camera, a
@@ -14,12 +22,16 @@
 ## 0. Principles
 1. **Text first.** Every number, recipe and rule must be reviewable as text. Binary `.uasset` files are build outputs of
    Python/C++, never hand-edited (the same rule as our Unity scenes).
-2. **Port logic 1:1, redesign engine glue.** Pure C# classes port almost mechanically (spike: 1.0–1.2 C++ lines per C#
-   line) together with their tests. MonoBehaviours, rigs, VFX, lighting, UI and audio are redesigned for UE.
+2. **Native UE first; hand-port only what is the feel.** The default for every system is the engine's own tool (section 4).
+   Code is hand-ported with its tests only where it defines how Lunarion feels or plays (section 4.2: the drive model, orbit
+   camera, scan aim, guidance rules, range-ring numbers); the spike measured that at 1.0–1.2 C++ lines per C# line. Everything
+   else is **rebuilt** around UE's strengths, from the design intent, not translated from the C#.
 3. **Same gates, same discipline.** zero warnings, zero technical debt, fail-fast wiring, tuning in data, one domain per
    session. The gates are rebuilt on UE tools (section 2).
-4. **Feel is checked against the Unity build side by side** (the owner-facing risk). Unity stays runnable as the reference
-   until M3 is accepted.
+4. **Feel is checked against recorded Unity references, not a running Unity.** The owner no longer needs Unity, so the Unity
+   editors stay closed. The references are the tagged `unity-reference` player build (run when a side-by-side is needed), the
+   captures and clips already in `Logs/`, and the bot's per-beat tables (time, cells, metres, frame times) as numeric
+   baselines. The feel rules in the design docs are the contract.
 
 ## 1. Target layout and repo strategy
 
@@ -61,7 +73,7 @@ dependencies.
 Lunarion/
   Lunarion.uproject
   Source/
-    LunarionCore/        <- Core: context, event bus, input actions, layers (collision channels), tuning base, save, localization
+    LunarionCore/        <- Core: subsystems and events, input actions, collision channels, tuning base, save, localization
     LunarionWorld/       <- World:  terrain + queries, sky/sun/Earth, layout, scatter          (deps: Core)
     LunarionRover/       <- Rover:  drive model, camera, scan aim, rig, rover VFX hooks        (deps: Core)
     LunarionGameplay/    <- Gameplay: scan, salvage, build, tow, opening flow, battery, save   (deps: Core, World, Rover)
@@ -80,10 +92,10 @@ Lunarion/
   Shared event structs live in `LunarionCore/Events/<Domain>Events.h`.
 - Spike lesson: a flat module layout needs `PublicIncludePaths.Add(ModuleDirectory)`; list `PhysicsCore`, `EnhancedInput`
   etc. explicitly, because a missing module is a **link** error, not a compile error.
-- **Composition:** one `ULunarionContext` (owned by the GameInstance) holds the typed event bus and registered services. An
-  **explicit ordered list** of systems is initialised by `ALunarionBootstrap` (no `GetAllActorsOfClass`, no global
-  singletons, no `static` mutable state), exactly as `GameBootstrap` does now. Systems are `UActorComponent`/plain C++
-  classes; actors stay thin.
+- **Composition, the UE way:** services are `UGameInstanceSubsystem`/`UWorldSubsystem`, talking through Core's typed events
+  (UE multicast delegates and Gameplay Tags). An **explicit boot order** is kept (one bootstrap initialises them in a fixed
+  list), and the Unity rules that guard the design stay: no `GetAllActorsOfClass`, no global singletons, no `static` mutable
+  state, wiring checked at startup with a loud error (fail fast). Actors stay thin; logic lives in components and plain C++.
 - **Autoplay as a plugin** (`Type: Developer`, loaded only in Development/Test configs; a `WITH_LUNARION_AUTOPLAY` define
   mirrors `LUNARION_AUTOPLAY`). It never ships; the packaged Shipping build has no trace of it.
 
@@ -104,8 +116,8 @@ Lunarion/
 ### 2.1 Parallel sessions and machine cost
 Measured on this machine (spike): 16 threads, **3.5 GB free RAM** with Unity Hub and one editor open, so UBT limited itself
 to 2 parallel actions; `Intermediate/` 2.7 GB for the editor target; module builds 1m41–2m31 cold.
-- **Pause Unity sessions** as the port ramps up: no new Unity feature work (owner), so Unity editors and Hub should close.
-  The reference Unity player is run from a packaged build, not the editor.
+- **The Unity editors are closed** (owner: Unity is no longer needed). The reference Unity player, when a side-by-side is
+  wanted, runs from the packaged `unity-reference` build, not the editor.
 - **Shared DDC:** one machine-wide Derived Data Cache (`UE-SharedDataCachePath=D:/UE_DDC`, `-ddc=` in every tool), so each
   worktree does not rebuild shaders and textures.
 - **Worktrees:** one per session as today, but each carries its own `Intermediate/` and `Binaries/` (3 to 6 GB). Budget disk
@@ -124,37 +136,41 @@ session), **GD** (game design), **Director** (merges, repo, plan).
 
 Size (C#, excluding tests) and what it becomes:
 
-| Domain | C# lines | Port nature | Owner |
+| Domain | C# lines (reference) | UE approach (native by default; hand-port only the feel) | Owner |
 |---|---|---|---|
-| Core | 6.9k | pure logic + services: port first, 1:1 | tools + Director |
-| Rover | 30.6k | drive/camera/scan aim ported (spike); rig, VFX, face redesigned | rover |
-| Gameplay | 36.3k | ~60% pure logic (mechanical), rest actors/components | story & flow |
-| World | 19.1k | queries/layout port (Claude); terrain look, sky, lighting redesigned (agy) | world (code); **agy** (look) |
-| UI | 31.6k | **redesign** (UI Toolkit → Slate/CommonUI, see 5): widget code and logic by Claude, visual design by agy | ui, ui-fit (code); **agy** (visual design) |
-| Audio | 8.4k | director logic ports; playback redesigned (MetaSounds) | audio |
-| Art | 34.3k | **not ported**: the Unity mesh kit and builders are replaced by Blender FBX + UE Python | **agy** (models, materials); art session reviews |
-| Autoplay + tools | 5.4k + Python | bot rewritten as a plugin; launcher and report ported | tools |
-| Showcase, Editor, App | 10.2k | replaced by Sequencer / Editor Utility / bootstrap | tools, Director |
+| Core | 6.9k | rebuild on UE subsystems, delegates, Gameplay Tags, Enhanced Input, Data Assets; hand-port only the typed-event contract names and tuning ranges | tools + Director |
+| Rover | 30.6k | **hand-port** the drive model, orbit camera and scan aim (they are the feel; the spike did it); rebuild the rig (Skeletal Mesh, Control Rig or an animation blueprint), VFX (Niagara) and face (render target) natively | rover |
+| Gameplay | 36.3k | **hand-port** the rule logic that is the design (opening flow, guidance, scan, battery and ring numbers); rebuild content and structures as Data Assets and DataTables, build mode and tow on UE components and Chaos constraints/cables | story & flow |
+| World | 19.1k | **rebuild** with Landscape, PCG and World Partition, Sky Atmosphere set to none, Directional Light and Lumen/VSM; layout and gates as data (Claude); look by agy | world (code); **agy** (look) |
+| UI | 31.6k | **rebuild** with CommonUI and Slate (see risk 4) on String Tables; keep the guidance rules; widget code by Claude, visual design by agy | ui, ui-fit (code); **agy** (visual design) |
+| Audio | 8.4k | **rebuild** with MetaSounds and Sound Classes/Submixes; keep the annunciator meanings and the no-lofi score rule | audio |
+| Art | 34.3k | **not ported**: replaced by Blender FBX and UE Python, Substrate materials, Nanite where it helps | **agy** (models, materials); art session reviews |
+| Autoplay + tools | 5.4k + Python | bot rewritten as a plugin on UE input injection and automation; launcher and report format carried over | tools |
+| Showcase, Editor, App | 10.2k | replaced by Sequencer, Editor Utility Widgets, game mode and subsystems | tools, Director |
 
 **Order (each step lands with its tests and gates green):**
 
 0. **Week 0 – foundation (tools, Director).** Repo bootstrap, Build.cs graph, `compile_check`, `box_check`, slots, shared DDC,
    LFS, `SETUP.md`, a CI-less "gate chain" script. Exit: an empty module graph builds with warnings as errors and the
    headless test run is green.
-1. **Core** (tools + Director): `ULunarionContext`, typed event bus (allocation-free for struct events), input actions
+1. **Core** (tools + Director): services as `UGameInstanceSubsystem`/`UWorldSubsystem` in an explicit boot order, typed events on UE
+   multicast delegates and Gameplay Tags (a thin typed bus only if a short spike shows delegates cannot do allocation-free
+   struct events), input actions
    (Drive, Look, Excavate, Tether, Winch, Jump, Recenter) in Enhanced Input, collision channels (Ground, Rover, Relic, Pickup,
    Prop, Trigger), tuning base, save (JSON, versioned), localization (`en`/`vi` JSON → StringTables, parity test). **Blocks
    everything.**
-2. **Rover** (rover): spike code promoted into `LunarionRover`: drive model, orbit camera, scan aim, head, then the
-   suspension/wheels rig, charge/battery visuals as placeholders. Decide the physics approach (section 5 risk 2).
-3. **World** (world): terrain queries (`ITerrainQuery`), basin layout and landmarks as data, sun/Earth/`ISunlight`, placeholder
-   terrain mesh and props, spawn of ruins as simple meshes.
+2. **Rover** (rover): spike code promoted into `LunarionRover` (the drive model, orbit camera and scan aim are hand-ported: they are
+   the feel), then the rig natively (Skeletal Mesh plus Control Rig or an animation blueprint for wheels, suspension, head),
+   charge/battery visuals as placeholders. Decide the physics approach (section 5 risk 2).
+3. **World** (world): a Landscape for the basin from the heightmap data and terrain queries on top of it, basin layout and
+   landmarks as data (DataTables), sun/Earth on a Directional Light with no atmosphere, ruins as simple meshes at first.
 4. **Gameplay** (story & flow), in this order: scan field and scan aim → materials/cargo hold → battery and pad/dock/ring →
-   build mode and structures → tow (RMB cable) → cutting/salvage → opening flow (`OpeningFlow`, steps, keys) → relay/answer →
-   save. Pure logic first with the tests, components after.
-5. **UI minimal** (ui): HUD line, chips, build strip/cost chip, battery, pause. **Audio minimal** (audio): event bus
+   build mode and structures → tow (RMB cable) → cutting/salvage → opening flow (steps, keys, guidance) → relay/answer →
+   save. The **rule logic that is the design** (opening flow, guidance, range ring, battery) is hand-ported with its tests first;
+   structures, content and presentation are rebuilt natively (Data Assets, DataTables, components, Chaos constraints).
+5. **UI minimal** (ui): HUD line, chips, build strip/cost chip, battery, pause. **Audio minimal** (audio): event
    subscribers with placeholder sounds. These run in parallel with step 4.
-6. **Bot** (tools): `LunarionAutoplay` plugin as soon as the Rover and a scan exist (M1), growing beat by beat with the opening; the naive/strict guidance gates and real pointer input (16:9, 21:9) are built **before** the content they guard (GD, section 4.1).
+6. **Bot** (tools): `LunarionAutoplay` plugin as soon as the Rover and a scan exist (M1), growing beat by beat with the opening; the naive/strict guidance gates and real pointer input (16:9, 21:9) are built **before** the content they guard (GD, section 4.3).
 7. **Art swap** (**agy**, reviewed by the art session): R1 FBX models (07, structures, ruins) imported and wired through the builders; the visual contracts in
    `tools/art/qa/contracts` are re-validated against the UE sockets.
 8. **Full UI, audio, feel** (UI code, audio code, rover feel code: Claude sessions; UI visual design, VFX and look: **agy**; GD reviews): "Moonlight Glass" HUD, 07's face/CRT databank, bespoke score,
@@ -204,11 +220,17 @@ VFX and look work. **Claude sessions** keep code, tools, tests, gameplay systems
 | **M3** | "Parity with the Unity opening, UI/audio/feel included" | HUD/menus/face in the Subnautica-grammar style, the spoken-less audio, camera and feel checklists accepted by the owner side by side with Unity; builds packaged by the pipeline; Unity freeze lifted | +6–8 weeks (10–14 total; spike: best ~8, worst ~20) |
 | **M4** | "Look upgrade (Lumen, VSM, Nanite, PCG)" | the owner's look target on the same gameplay, performance budget met on the target PC | after M3 |
 
-Spike basis: pure logic is ~45% of the work (mechanical, 10–14 working days with 8 sessions); engine-bound code ~55%
-(3–5x slower per line, 5–8 weeks with 8 sessions); tests 95k lines (logic ports with its code, scene tests ~2 weeks
-overlapping); the bot and builders are the two unknowns.
+Spike basis (it assumed a 1:1 port): pure logic is ~45% of the work (mechanical, 10–14 working days with 8 sessions); engine-bound
+code ~55% (3–5x slower per line, 5–8 weeks with 8 sessions); tests 95k lines; the bot and builders are the two unknowns.
+**Native-first changes the shape, not the schedule's order of magnitude:** less hand-ported code (only section 4.2) and less
+translation of Unity glue, but more learning of UE systems (Landscape/PCG, Niagara, MetaSounds, CommonUI, Sequencer). We keep the
+milestones and the 10 to 14 weeks as the planning figure and re-estimate after M1 **(verify)**.
 
-## 4. What we deliberately do NOT port 1:1 (rebuild better)
+## 4. Native UE first: what we rebuild instead of porting, and the small set we hand-port
+
+### 4.1 Rebuild with the native UE tool (the default)
+Each row is "rebuild with X from the design intent", not "port Y". The Unity column is only the reference for what the
+system must achieve.
 
 | Unity | UE | Why | Owner |
 |---|---|---|---|
@@ -220,12 +242,25 @@ overlapping); the bot and builders are the two unknowns.
 | URP bake + lighting | directional sun + Earth light, **Lumen/VSM** at M4; at M1–M3 a simple stable setup matched to the Unity look | look is milestone M4, not parity | **agy** (Lumen/VSM, exposure); world reviews |
 | UI Toolkit (UXML/USS) | **Slate in C++** for the HUD (text, reviewable, testable), **CommonUI/UMG** only for menus; face/CRT as a Slate widget drawn to a render target on 07's screen mesh | see risk 4 | **agy** (visual design); ui sessions (widgets) |
 | URP shaders and the shared palette material (`M_LowPoly`, glow, sky, beam) | **Substrate** materials built by UE-Python from the palette and the R1 contracts; hand-written HLSL only where a material cannot do it | the shaders were URP-specific; Substrate gives layered look at M3–M4 | **agy** (materials); world/rover review |
-| `ScriptableObject` tuning | `USTRUCT` defaults + a `UDataAsset` per domain; content in DataTables from CSV/JSON | text-reviewable | Claude (core, domains) |
-| Unity Input System asset | Enhanced Input, actions and mappings created in code/config | spike: needs `DefaultInput.ini` component classes and actions created before `BeginPlay` | Claude (core) |
-| `JsonUtility` save | JSON via `FJsonObjectConverter`, versioned, in `Saved/` | keeps saves text and diffable | Claude (core) |
+| `ScriptableObject` tuning | `UDataAsset` per domain with `USTRUCT` defaults; content in DataTables from CSV/JSON | native, and text-reviewable | Claude (core, domains) |
+| Unity Input System asset | **Enhanced Input** (Input Actions, Mapping Contexts) created by script | spike: needs `DefaultInput.ini` component classes and actions created before `BeginPlay` | Claude (core) |
+| `JsonUtility` save | UE `USaveGame` with a versioned struct, plus a JSON dump in tests for diffs | native; saves are not reviewed code | Claude (core) |
 | Showcase build, `Editor/*` scene builder | Sequencer / Editor Utility Widgets; builder scripts | different engine tools | Claude (tools), **agy** (shots) |
 
-### 4.1 Design must-keeps (from GD's `ue-port-design-notes.md`) and who guards them
+### 4.2 Hand-port set: our code that IS the feel (or UE has nothing better)
+Ported with its tests, from the tagged Unity commit, and checked against the recorded references:
+
+| Code | Why it is hand-ported | Native alternative rejected because |
+|---|---|---|
+| 07's drive model (`GroundModel`, `SteeringModel`, `LongitudinalDrive`, `DriveInputShaping`) on a locked-rotation physics sphere | it is how 07 feels; the spike already ported it | Chaos Vehicle is a wheeled-car model, not our rolling-sphere design |
+| The player-owned orbit camera (`CameraOrbit`) and the head/scan aim (`ScanAim`, `HeadAim`) | the camera is the player's and the scan aim is a core verb | UE template cameras auto-follow; Cinemachine has no UE twin |
+| The guidance rules (one element at a time, the 5-second next-action rule, persistent chips, the stall reminder) and the opening flow's steps and keys | they are the design | none |
+| The range-ring, battery and day-end numbers (220 m per cell, 60% start, pad-keeps-07) as data tables | the balance the bot's per-beat table checks | none |
+| The naive and strict bot gates and the report format | they are the quality gate | Gauntlet checks builds, not first-time-player cues |
+
+Everything not in this table defaults to 4.1.
+
+### 4.3 Design must-keeps (from GD's `ue-port-design-notes.md`) and who guards them
 The design docs stay valid; the port must not lose their rules. Each row names the owner of the guard.
 
 | Area | Must keep exactly | Owner of the work | Guard |
@@ -285,7 +320,7 @@ into M1/M2**, ahead of content, rather than coming after it.
 | Day 1–2 | Director | create `D:/Project/MoonProject-UE/Lunarion` repo, LFS rules, `.gitignore`, branch/worktree flow, `CLAUDE.md` for UE |
 | Day 1–3 | tools | `compile_check`, `box_check`, slots, shared DDC, headless test runner, `SETUP.md`, the `tools/ue/capture.py` fixed-camera capture and the agy brief template (`Logs/TASK.md`); one smoke module green |
 | Day 1–5 | rover | promote the spike into `LunarionRover` + `LunarionCore` stubs; decide physics substeps; port the drive tests |
-| Day 2–6 | tools + Director | Core: context, event bus, input actions, tuning base, save, localization + tests |
+| Day 2–6 | tools + Director | Core: subsystems and events, input actions, tuning base, save, localization + tests |
 | Day 3–8 | world (code); **agy** (placeholder terrain look, sun and exposure) | terrain queries, sun/Earth, basin layout data, placeholder meshes |
 | Day 3–10 | story & flow | scan field, materials, hold, battery logic with tests (pure logic first) |
 | Day 4–8 | ui + ui-fit (code); **agy** (visual design) | UI spike (risk 4) and the HUD line/chip/cost-chip as the first widgets; agy drafts the look of the chip, line and CRT face in the spike |
