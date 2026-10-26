@@ -22,6 +22,8 @@ namespace MoonProject.Art.PlayModeTests
         private const int SkyQueue = 2900;
         private const float ParkedBeyond = 5000f;
         private const string NearRubble = "Rubble";
+        private const string TerrainChunk = "TerrainChunk";
+        private const string Backdrop = "TerrainBackdrop";
         private static readonly string[] SkippedShaderWords = { "Sky", "Earth", "Glint", "Halo", "Beacon", "Hologram" };
 
         /// <summary>Writes scene.obj and scene.mtl into <paramref name="folder"/>; returns a summary line.</summary>
@@ -32,6 +34,7 @@ namespace MoonProject.Art.PlayModeTests
             int objects = 0;
             var bases = new IndexBases();
             long triangles = 0;
+            Rect terrain = TerrainFootprint();
             using (var obj = new StreamWriter(Path.Combine(folder, "scene.obj"), false, new UTF8Encoding(false)))
             {
                 obj.WriteLine("mtllib scene.mtl");
@@ -44,7 +47,9 @@ namespace MoonProject.Art.PlayModeTests
                             continue;
                         }
 
-                        triangles += WriteObject(obj, renderer, mesh, bases, materials);
+                        bool backdrop = renderer.name.StartsWith(Backdrop, StringComparison.Ordinal);
+                        Rect hole = backdrop ? terrain : Rect.zero;
+                        triangles += WriteObject(obj, renderer, mesh, bases, materials, hole);
                         objects++;
                         if (baked)
                         {
@@ -110,8 +115,37 @@ namespace MoonProject.Art.PlayModeTests
             return true;
         }
 
+        /// <summary>
+        /// The ground the terrain chunks cover (world x, z). The backdrop is one sheet under the whole basin whose
+        /// middle the game fades out near the view; exported, that middle would roof the basin, so its triangles
+        /// inside this footprint are dropped.
+        /// </summary>
+        private static Rect TerrainFootprint()
+        {
+            var footprint = Rect.zero;
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(false))
+                {
+                    if (!renderer.name.StartsWith(TerrainChunk, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    Bounds b = renderer.bounds;
+                    var rect = Rect.MinMaxRect(b.min.x, b.min.z, b.max.x, b.max.z);
+                    footprint = footprint == Rect.zero
+                        ? rect
+                        : Rect.MinMaxRect(Mathf.Min(footprint.xMin, rect.xMin), Mathf.Min(footprint.yMin, rect.yMin),
+                            Mathf.Max(footprint.xMax, rect.xMax), Mathf.Max(footprint.yMax, rect.yMax));
+                }
+            }
+
+            return footprint;
+        }
+
         private static long WriteObject(StreamWriter obj, Renderer renderer, Mesh mesh, IndexBases bases,
-            Dictionary<string, Color> materials)
+            Dictionary<string, Color> materials, Rect hole)
         {
             Matrix4x4 toWorld = renderer is SkinnedMeshRenderer
                 ? Matrix4x4.TRS(renderer.transform.position, renderer.transform.rotation, Vector3.one)
@@ -127,10 +161,12 @@ namespace MoonProject.Art.PlayModeTests
             // Some generated meshes park unused vertices at NaN or far out (the near rubble's hidden stones); they are
             // written at the origin and every triangle that uses one is dropped
             var finite = new bool[vertices.Length];
+            var inHole = new bool[vertices.Length];
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 p = toWorld.MultiplyPoint3x4(vertices[i]);
                 finite[i] = IsFinite(p);
+                inHole[i] = hole != Rect.zero && hole.Contains(new Vector2(p.x, p.z));
                 obj.WriteLine(finite[i] ? $"v {F(p.z)} {F(-p.x)} {F(p.y)}" : "v 0 0 0");
             }
 
@@ -164,7 +200,8 @@ namespace MoonProject.Art.PlayModeTests
                 int[] tris = arrays.Triangles[sub];
                 for (int t = 0; t < tris.Length; t += 3)
                 {
-                    if (!finite[tris[t]] || !finite[tris[t + 1]] || !finite[tris[t + 2]])
+                    if (!finite[tris[t]] || !finite[tris[t + 1]] || !finite[tris[t + 2]] ||
+                        (inHole[tris[t]] && inHole[tris[t + 1]] && inHole[tris[t + 2]]))
                     {
                         continue;
                     }
