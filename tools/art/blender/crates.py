@@ -490,6 +490,7 @@ def export_all_crates(
         wx, hy, dz = spec["size_u"]
         fp_rad = max(wx, dz) * 0.85
 
+        r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
         r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
         ruins_common.apply_signage_uvs(root)
         ruins_common.bake_ruins_vertex_colors(root, footprint_radius=fp_rad)
@@ -505,6 +506,7 @@ def export_all_crates(
 
             # Build an open-lid companion copy beside the closed crate to showcase the rear hinge + interior cavity
             open_root = build_crate(crate_name)
+            r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(open_root))
             r1kit.apply_triplanar_uvs(open_root, texel_scale=0.85)
             ruins_common.apply_signage_uvs(open_root)
             ruins_common.bake_ruins_vertex_colors(open_root, footprint_radius=fp_rad)

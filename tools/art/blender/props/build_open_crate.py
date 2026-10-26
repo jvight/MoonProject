@@ -85,8 +85,8 @@ def build_igniter_into(
     )
     # Warm-orange identification band around the forward end of the exciter housing
     mb.add_bevel_box(
-        center_u=(cx - 0.022, cy, cz - 0.004),
-        size_u=(0.016, 0.048, 0.058),
+        center_u=(cx - 0.0225, cy, cz - 0.004),
+        size_u=(0.013, 0.048, 0.058),
         mat="R1_OrangeStripe",
         bevel=0.0025,
         segments=1,
@@ -116,7 +116,7 @@ def build_igniter_into(
 
     # Top stencilled specification tag plate (`R1_Signage` + tight `R1_Brass` bezel)
     mb.add_bevel_box(
-        center_u=(cx - 0.052, cy + 0.0235, cz - 0.004),
+        center_u=(cx - 0.052, cy + 0.0255, cz - 0.004),
         size_u=(0.050, 0.0035, 0.038),
         mat="R1_Brass",
         bevel=0.001,
@@ -137,9 +137,9 @@ def build_igniter_into(
     # 2. High-voltage ribbed ceramic insulator stack (X: -0.014 .. +0.048)
     # Central ceramic core cylinder
     mb.add_cylinder(
-        center_u=(cx + 0.017, cy, cz - 0.004),
+        center_u=(cx + 0.019, cy, cz - 0.004),
         radius=0.015,
-        length=0.062,
+        length=0.066,
         mat="R1_CreamEnamel",
         axis_u="X",
         segments=18,
@@ -497,8 +497,8 @@ def build_open_crate() -> bpy.types.Object:
     skid_w = cw * 1.15
     for sx in (-1.0, 1.0):
         mb_body.add_bevel_box(
-            center_u=(sx * (hx - skid_w * 0.5), skid_h * 0.5, 0.0),
-            size_u=(skid_w, skid_h, dz),
+            center_u=(sx * (hx - skid_w * 0.5 - 0.002), skid_h * 0.5, 0.0),
+            size_u=(skid_w, skid_h, dz - 0.004),
             mat=bumper_mat,
             bevel=min(0.004, skid_h * 0.25),
             segments=1,
@@ -523,8 +523,8 @@ def build_open_crate() -> bpy.types.Object:
 
     floor_h = max(0.022, tub_h * 0.24)
     mb_body.add_bevel_box(
-        center_u=(0.0, tub_bot + floor_h * 0.5, 0.0),
-        size_u=(shell_w, floor_h, shell_d),
+        center_u=(0.0, tub_bot + floor_h * 0.5 + 0.002, 0.0),
+        size_u=(shell_w - 0.008, floor_h - 0.004, shell_d - 0.008),
         mat=body_mat,
         bevel=bev,
         segments=2,
@@ -567,7 +567,7 @@ def build_open_crate() -> bpy.types.Object:
     for sz in (-1.0, 1.0):
         mb_body.add_bevel_box(
             center_u=(0.0, tub_cy, sz * (shell_d * 0.5 - wall_outer_t * 0.5)),
-            size_u=(shell_w, tub_h, wall_outer_t),
+            size_u=(shell_w - 0.004, tub_h, wall_outer_t),
             mat=body_mat,
             bevel=bev * 0.85,
             segments=1,
@@ -590,7 +590,7 @@ def build_open_crate() -> bpy.types.Object:
         )
         mb_body.add_bevel_box(
             center_u=(sx * (shell_w * 0.5 - wall_t + wall_inner_t * 0.5), liner_cy, 0.0),
-            size_u=(wall_inner_t, liner_h, shell_d - wall_t * 1.9),
+            size_u=(wall_inner_t, liner_h - 0.004, shell_d - wall_t * 1.9),
             mat=bumper_mat,
             bevel=0.004,
             segments=1,
@@ -664,14 +664,14 @@ def build_open_crate() -> bpy.types.Object:
     handle_out = min(inset * 0.88, 0.014)
     for sx in (-1.0, 1.0):
         mb_body.add_bevel_box(
-            center_u=(sx * (shell_w * 0.5 + handle_out * 0.5), tub_top - 0.028, 0.0),
-            size_u=(handle_out, 0.026, handle_d),
+            center_u=(sx * (shell_w * 0.5 + handle_out * 0.5 + 0.001), tub_top - 0.028, 0.0),
+            size_u=(handle_out - 0.002, 0.026, handle_d),
             mat=bumper_mat,
             bevel=0.0035,
             segments=1,
         )
         mb_body.add_bevel_box(
-            center_u=(sx * (shell_w * 0.5 + handle_out * 0.72), tub_top - 0.028, 0.0),
+            center_u=(sx * (shell_w * 0.5 + handle_out * 0.72 + 0.003), tub_top - 0.028, 0.0),
             size_u=(handle_out * 0.55, 0.018, handle_d * 0.62),
             mat="R1_Rubber",
             bevel=0.0025,
@@ -720,7 +720,7 @@ def build_open_crate() -> bpy.types.Object:
 
     for lx in spec["latch_offsets_x"]:
         mb_body.add_bevel_box(
-            center_u=(lx, hinge_y - 0.022, shell_d * 0.5 + rib_t * 0.5),
+            center_u=(lx, hinge_y - 0.022, shell_d * 0.5 + rib_t * 0.5 + 0.002),
             size_u=(0.036, 0.028, rib_t),
             mat=bumper_mat,
             bevel=0.003,
@@ -789,8 +789,8 @@ def build_open_crate() -> bpy.types.Object:
     for sx in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
             mb_lid.add_bevel_box(
-                center_u=(sx * (hx - cw * 0.5), (lid_bot + hy) * 0.5, sz * (hz - cw * 0.5)),
-                size_u=(cw, hy - lid_bot, cw),
+                center_u=(sx * (hx - cw * 0.5), (lid_bot - 0.002 + hy) * 0.5, sz * (hz - cw * 0.5)),
+                size_u=(cw - 0.004, hy - lid_bot + 0.002, cw - 0.004),
                 mat=bumper_mat,
                 bevel=min(0.005, cw * 0.15),
                 segments=1,
@@ -798,7 +798,7 @@ def build_open_crate() -> bpy.types.Object:
     for i in range(n_rx):
         rx = 0.0 if n_rx == 1 else (-usable_x * 0.5 + usable_x * (i / (n_rx - 1)))
         mb_lid.add_bevel_box(
-            center_u=(rx, hy - lid_rib_h * 0.5, 0.0),
+            center_u=(rx, hy - lid_rib_h * 0.5 - 0.002, 0.0),
             size_u=(rib_w * 1.15, lid_rib_h, dz - cw * 1.6),
             mat=bumper_mat,
             bevel=min(0.003, lid_rib_h * 0.25),
@@ -838,7 +838,7 @@ def build_open_crate() -> bpy.types.Object:
             segments=1,
         )
         mb_lid.add_bevel_box(
-            center_u=(lx, hinge_y - 0.012, latch_z + 0.003),
+            center_u=(lx, hinge_y - 0.012, latch_z + 0.005),
             size_u=(0.028, 0.022, 0.008),
             mat=bumper_mat,
             bevel=0.002,
@@ -883,7 +883,7 @@ def build_open_crate() -> bpy.types.Object:
     # Three Separate Content Child MESH Objects (`Igniter`, `MetalBundle`, `WiringSpool`)
     # =========================================================================
     # 1. `Igniter` (centre-front bay, resting on presentation cradle at y=0.205, z=0.032)
-    igniter_pivot_u = (0.006, 0.205, 0.032)
+    igniter_pivot_u = (0.010, 0.205, 0.032)
     mb_igniter = r1kit.MeshBuilder("Igniter", pivot_u=igniter_pivot_u)
     build_igniter_into(mb_igniter, center_u=igniter_pivot_u)
     ruins_common.to_ruin_object(mb_igniter, "Igniter", parent=root_obj, origin_u=igniter_pivot_u)
@@ -926,6 +926,7 @@ def export_open_crate(
 
     ruins_common.reset_ruins_scene()
     root = build_open_crate()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
     ruins_common.apply_signage_uvs(root)
     ruins_common.bake_ruins_vertex_colors(root, footprint_radius=0.55)
