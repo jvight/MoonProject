@@ -609,7 +609,7 @@ namespace MoonProject.Rover
 
             bool mayRecenter = !_moment.IsActive && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling
-                && !_buildFraming.IsActive && _buildFraming.Weight <= 0f && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
+                && !_buildFraming.IsActive && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
                 _rover.DriveInput.y, _rover.NormalizedSpeed, descent, _rover.IsGrounded, mayRecenter);
         }
@@ -904,7 +904,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _buildFraming.LookShift;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift;
             float inspectFade = Mathf.Min(1f - _faceInspectWeight, _openingDampingFade);
             float freeTargetShare = Mathf.Max(0f, _tuning.FreeLookDampingShare - _tuning.FreeLookBodyDampingShare)
                 * _freeLook * inspectFade;
@@ -932,7 +932,7 @@ namespace MoonProject.Rover
             }
 
             int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
-            bool mayFrame = _held.Weight <= 0f && !_buildFraming.IsActive && _buildFraming.Weight <= 0f
+            bool mayFrame = _held.Weight <= 0f && !_buildFraming.IsActive
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
@@ -955,8 +955,8 @@ namespace MoonProject.Rover
         {
             yaw = _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
-                - _crawl * _tuning.CrawlLower + _buildFraming.ElevationOffset;
-            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack) * (1f + _buildFraming.PullBack);
+                - _crawl * _tuning.CrawlLower;
+            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
         }
 
         /// <summary>07 hooked a load: its renderers are the obstacle the chase camera keeps clear of.</summary>
@@ -982,10 +982,6 @@ namespace MoonProject.Rover
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
-            if (_buildFraming.Weight > 0f)
-            {
-                screen.y = Mathf.Lerp(screen.y, _tuning.BuildFrameScreenY, _buildFraming.Weight);
-            }
             float framed = _held.Weight;
             if (framed > 0f)
             {
@@ -1401,18 +1397,25 @@ namespace MoonProject.Rover
         {
             float bearing = _orbitState.Bearing;
             float before = bearing;
+            bool driving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
             _buildFraming.Step(
                 _rover.Position,
                 look,
                 recenter,
+                driving,
                 externalYaw,
                 ref bearing,
-                _orbitState.Elevation,
                 _tuning,
                 deltaTime);
             if (Mathf.Abs(Mathf.DeltaAngle(before, bearing)) > LookEpsilon)
             {
                 _orbitState.AdoptBearing(bearing);
+            }
+
+            if (_buildFraming.IsActive && !BuildFraming.IsOffScreen(
+                    _viewCamera.WorldToViewportPoint(_buildFraming.GhostPosition), _tuning.BuildFrameScreenMargin))
+            {
+                _buildFraming.End();
             }
 
             _buildFraming.RecordOrbitBearing(_orbitState.Bearing);
@@ -1435,13 +1438,16 @@ namespace MoonProject.Rover
                     _gazePan.End();
                 }
 
-                if (!_buildFraming.IsActive)
+                // One gentle turn, and only when the ghost starts off screen: a ghost already in view needs none.
+                if (!_buildFraming.IsActive
+                    && BuildFraming.IsOffScreen(_viewCamera.WorldToViewportPoint(placing.GhostPosition),
+                        _tuning.BuildFrameScreenMargin))
                 {
-                    _buildFraming.Begin(_rover.Position, placing.GhostPosition, placing.SnappedToApron, _orbitState.Bearing);
+                    _buildFraming.Begin(placing.GhostPosition, _orbitState.Bearing);
                 }
                 else
                 {
-                    _buildFraming.MoveGhost(_rover.Position, placing.GhostPosition, placing.SnappedToApron);
+                    _buildFraming.MoveGhost(placing.GhostPosition);
                 }
             }
             else

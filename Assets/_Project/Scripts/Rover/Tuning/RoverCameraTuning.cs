@@ -721,45 +721,18 @@ namespace MoonProject.Rover
         [SerializeField] private float _faceInspectHeadCounterRollMax = 8f;
 
         [Header("Build mode framing")]
-        [Tooltip("Fastest the chase camera turns or tilts (deg/s) when easing to frame 07 and the placing ghost in build mode (calm, <= 20 deg/s).")]
+        [Tooltip("Fastest the chase view turns (deg/s) toward an off-screen placing ghost: one gentle ease, ended the "
+            + "moment the ghost is in view or the player touches the view or the wheel.")]
         [Range(5f, 20f)]
         [SerializeField] private float _buildFrameMaxRate = 20f;
 
-        [Tooltip("Degrees before the ghost's bearing over which build-mode yaw framing eases out to a stop.")]
+        [Tooltip("Degrees before the ghost's bearing over which the build-mode turn eases out to a stop.")]
         [Range(1f, 45f)]
         [SerializeField] private float _buildFrameEaseAngle = 10f;
 
-        [Tooltip("Modest chase elevation (deg, never top-down) the camera eases to in build mode so both 07 and the ground ghost or apron sit in frame.")]
-        [Range(14f, 32f)]
-        [SerializeField] private float _buildFrameElevation = 22f;
-
-        [Tooltip("Seconds over which build-mode target framing eases in when entering Placing.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _buildFrameInSeconds = 0.9f;
-
-        [Tooltip("Seconds over which build-mode framing eases back to the normal chase camera when leaving Placing.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _buildFrameOutSeconds = 0.9f;
-
-        [Tooltip("Half-life (s) of the look target following the ghost as it moves on the ground in build mode.")]
-        [Range(0.05f, 1f)]
-        [SerializeField] private float _buildFrameFollowHalfLife = 0.18f;
-
-        [Tooltip("Share of the horizontal offset from 07 to the placing ghost added to the chase look point so both 07 and the ghost or apron sit framed together.")]
-        [Range(0f, 0.6f)]
-        [SerializeField] private float _buildFrameLookShare = 0.25f;
-
-        [Tooltip("Largest horizontal look-point shift (m) toward the placing ghost in build mode.")]
-        [Range(0f, 4f)]
-        [SerializeField] private float _buildFrameMaxLookShift = 1.4f;
-
-        [Tooltip("Extra chase distance (share of normal distance) while framing 07 and the placing ghost in build mode.")]
-        [Range(0f, 0.5f)]
-        [SerializeField] private float _buildFramePullBack = 0.12f;
-
-        [Tooltip("Vertical screen composition (0 = centre, +y = lower) while framing 07 and the placing ghost in build mode.")]
-        [Range(-0.1f, 0.25f)]
-        [SerializeField] private float _buildFrameScreenY = 0.08f;
+        [Tooltip("How far in from the screen's edge (a share of its size) the ghost must be to count as in view.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _buildFrameScreenMargin = 0.1f;
 
         public float MouseSensitivity => _mouseSensitivity;
 
@@ -1085,20 +1058,7 @@ namespace MoonProject.Rover
 
         public float BuildFrameEaseAngle => _buildFrameEaseAngle;
 
-        public float BuildFrameElevation => _buildFrameElevation;
+        public float BuildFrameScreenMargin => _buildFrameScreenMargin;
 
-        public float BuildFrameInSeconds => _buildFrameInSeconds;
-
-        public float BuildFrameOutSeconds => _buildFrameOutSeconds;
-
-        public float BuildFrameFollowHalfLife => _buildFrameFollowHalfLife;
-
-        public float BuildFrameLookShare => _buildFrameLookShare;
-
-        public float BuildFrameMaxLookShift => _buildFrameMaxLookShift;
-
-        public float BuildFramePullBack => _buildFramePullBack;
-
-        public float BuildFrameScreenY => _buildFrameScreenY;
     }
 }

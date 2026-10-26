@@ -172,10 +172,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 1f,
                 "Un-snapped ghost leaves the apron bay.");
 
-            // Leaving build mode eases the build framing back to zero.
+            // Leaving build mode ends the build framing.
             build.Close();
-            yield return new WaitForSeconds(rig.BuildFraming.Weight > 0f ? 1.2f : 0.2f);
-            Assert.Less(rig.BuildFraming.Weight, 0.05f, "Leaving build mode eases build framing back.");
+            yield return new WaitForSeconds(0.2f);
+            Assert.IsFalse(rig.BuildFraming.IsActive, "Leaving build mode ends the build framing.");
 
             // --- 2. B7/B8 Solar Array West of the Pad ---
             Vector3 arraySpot = Flat(apron) + Vector3.left * ArrayWestSpacing;

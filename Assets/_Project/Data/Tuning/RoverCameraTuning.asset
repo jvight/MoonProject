@@ -405,11 +405,4 @@ MonoBehaviour:
   _faceInspectHeadCounterRollMax: 8
   _buildFrameMaxRate: 20
   _buildFrameEaseAngle: 10
-  _buildFrameElevation: 22
-  _buildFrameInSeconds: 0.9
-  _buildFrameOutSeconds: 0.9
-  _buildFrameFollowHalfLife: 0.18
-  _buildFrameLookShare: 0.25
-  _buildFrameMaxLookShift: 1.4
-  _buildFramePullBack: 0.12
-  _buildFrameScreenY: 0.08
+  _buildFrameScreenMargin: 0.1

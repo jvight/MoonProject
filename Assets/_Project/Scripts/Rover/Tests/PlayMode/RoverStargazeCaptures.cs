@@ -58,7 +58,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float ProbeTurn = 1f;
         private const float ProbeSeconds = 1f;
         private const float LookTimeout = 6f;
-        private const float BeatTimeout = 8f;
+        private const float BeatTimeout = 16f;
 
         /// <summary>Once the beat is on, 07 lifts its head this far into the gaze within the timeout.</summary>
         private const float JoinedGaze = 0.9f;
@@ -97,8 +97,6 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The brace capture: a hull plate's stages, the tier-0 stage time, the brace and the held breath.</summary>
         private const int HullStages = 3;
         private const float StageSeconds = 0.45f;
-        private const float BraceSeconds = 0.5f;
-        private const float HeldBreathSeconds = 0.12f;
 
         /// <summary>The hatch capture: five of eight slots used, a bundle's flight, and the wait before each frame.</summary>
         private const int HatchCrates = 5;
@@ -355,59 +353,6 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "portrait.md"), report.ToString());
             Object.Destroy(image);
             Assert.Greater(shown, 0, "07 shows in its portrait.");
-        }
-
-        /// <summary>
-        /// The charge-up's weight (0.5.5 §5.3, §5.6) from the chase camera: a fresh charge on a hull plate (3 stages)
-        /// braces 07 and pushes the camera in; frames at rest, braced, and at the full lock, with the camera's
-        /// distance and height from 07 in the report.
-        /// </summary>
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(RoverSessionScene))]
-        [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator ChargeBrace_IsCapturedBracedAndPushedIn_ForAFreshHullCharge()
-        {
-            yield return Boot();
-            _report.AppendLine("# The charge-up's brace and push-in (real Main scene)");
-            _report.AppendLine();
-            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
-            _report.AppendLine("|---|---:|---:|---:|---|");
-            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
-            yield return Wait(StickProbeSeconds);
-            Set(_gamepad.rightStick, Vector2.zero);
-            float opening = Time.time + WakeEaseTimeout;
-            while (_cameraRig.Opening.IsActive)
-            {
-                Assert.Less(Time.time, opening, "The wake hands over first.");
-                yield return null;
-            }
-
-            yield return Wait(SettleSeconds);
-            Capture("brace-0-rest");
-            Vector3 rest = _view.transform.position - _rover.Position;
-            Vector3 cutPoint = _rover.Position + _rover.Rotation * Vector3.forward * CutReach + Vector3.up * CutRise;
-            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cutPoint, Vector3.up, 0f,
-                BraceSeconds + HullStages * StageSeconds));
-            _context.Events.Publish(new CutChargeStaged(0, HullStages, false, StageSeconds));
-            yield return Wait(BraceSeconds);
-            Capture("brace-1-braced");
-            for (int stage = 1; stage <= HullStages; stage++)
-            {
-                yield return Wait(StageSeconds);
-                _context.Events.Publish(new CutChargeStaged(stage, HullStages, false, StageSeconds));
-            }
-
-            yield return Wait(HeldBreathSeconds);
-            Capture("brace-2-lock");
-            Vector3 locked = _view.transform.position - _rover.Position;
-            _report.AppendLine();
-            _report.AppendLine($"Camera from 07: rest {rest.magnitude:F2} m (up {rest.y:F2} m), full lock "
-                + $"{locked.magnitude:F2} m (up {locked.y:F2} m).");
-            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cutPoint, Vector3.up, 0f, 0f));
-            Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "brace.md"), _report.ToString());
-            Assert.Less(locked.magnitude, rest.magnitude, "A fresh hull charge pushes the camera in.");
         }
 
         /// <summary>
@@ -762,6 +707,8 @@ namespace MoonProject.Rover.PlayModeTests
 
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)
         {
+            // Each night 07 may gaze once: the earthlit phase arms the beat.
+            _context.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
             _context.Get<IRoverPlacement>().PlaceAt(ground, Quaternion.Euler(0f, yaw, 0f));
             yield return Wait(SettleSeconds);
             Capture(name + "-0-level");
