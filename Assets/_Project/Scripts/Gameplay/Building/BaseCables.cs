@@ -25,7 +25,12 @@ namespace MoonProject.Gameplay
         private readonly ITerrainQuery _terrain;
         private readonly Material _material;
         private readonly Transform _parent;
+        private static readonly int PulseAlongId = Shader.PropertyToID("_PulseAlong");
+        private static readonly int PulseWidthId = Shader.PropertyToID("_PulseWidth");
+        private static readonly int PulseColorId = Shader.PropertyToID("_PulseColor");
+
         private readonly BaseCableMesh _mesher = new BaseCableMesh();
+        private readonly MaterialPropertyBlock _pulseBlock = new MaterialPropertyBlock();
         private readonly Vector3[] _points = new Vector3[BaseCablePath.MaxPoints];
         private readonly List<Cable> _cables = new List<Cable>();
         private readonly Stack<Cable> _free = new Stack<Cable>();
@@ -75,6 +80,16 @@ namespace MoonProject.Gameplay
         public Vector3 Along(int index, float t01)
         {
             return _cables[index].Along(t01);
+        }
+
+        /// <summary>
+        /// Lights cable <paramref name="index"/> from inside its lead (R1Lit's power band): a soft band
+        /// <paramref name="widthMetres"/> across, <paramref name="t01"/> of the way from its piece's port, in
+        /// <paramref name="color"/>; black leaves the cable dark.
+        /// </summary>
+        public void SetPulse(int index, float t01, float widthMetres, Color color)
+        {
+            _cables[index].SetPulse(_pulseBlock, t01, widthMetres, color);
         }
 
         /// <summary>Where cable <paramref name="index"/> runs: from a piece's port to the far end.</summary>
@@ -214,6 +229,15 @@ namespace MoonProject.Gameplay
                 }
 
                 return _path[_count - 1];
+            }
+
+            /// <summary>The band's centre goes as metres along the lead, as the mesh lays its length out.</summary>
+            public void SetPulse(MaterialPropertyBlock block, float t01, float widthMetres, Color color)
+            {
+                block.SetFloat(PulseAlongId, Mathf.Clamp01(t01) * _reached[_count - 1]);
+                block.SetFloat(PulseWidthId, widthMetres);
+                block.SetColor(PulseColorId, color);
+                _renderer.SetPropertyBlock(block);
             }
 
             public void Lay(Vector3 from, Vector3 to, BaseCableMesh mesher, Vector3[] points, int count,

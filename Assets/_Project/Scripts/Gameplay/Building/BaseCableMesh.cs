@@ -13,8 +13,10 @@ namespace MoonProject.Gameplay
         private const int LeadSides = 6;
         private const int SleeveSides = 8;
 
-        // R1Lit reads vertex colour as R: open to the sky, G: edge wear, B: cavity. A plain rubber lead: open, unworn.
+        // R1Lit reads vertex colour as R: open to the sky, G: edge wear, B: cavity, A: where the power pulse may glow.
+        // A plain rubber lead: open, unworn, carrying the pulse; its plug sleeves stay dark.
         private static readonly Color32 Rubber = new Color32(255, 0, 0, 255);
+        private static readonly Color32 SleeveRubber = new Color32(255, 0, 0, 0);
 
         private readonly List<Vector3> _positions = new List<Vector3>();
         private readonly List<Vector3> _normals = new List<Vector3>();
@@ -86,7 +88,7 @@ namespace MoonProject.Gameplay
                     _positions.Add(middle + normal * radius);
                     _normals.Add(normal);
                     _uvs.Add(new Vector2(r, k / (float)SleeveSides));
-                    _colors.Add(Rubber);
+                    _colors.Add(SleeveRubber);
                 }
             }
 
@@ -98,7 +100,7 @@ namespace MoonProject.Gameplay
                 _positions.Add(end + facing * half);
                 _normals.Add(facing);
                 _uvs.Add(new Vector2(r, 0.5f));
-                _colors.Add(Rubber);
+                _colors.Add(SleeveRubber);
                 int rim = ring + r * SleeveSides;
                 for (int k = 0; k < SleeveSides; k++)
                 {
