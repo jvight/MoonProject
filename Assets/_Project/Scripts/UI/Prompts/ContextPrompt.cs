@@ -13,7 +13,8 @@ namespace MoonProject.UI
     /// floating above the relevant world point, projected through the player's camera and softly following it on
     /// screen. It hides while its point is behind the camera. Each appearance is published as a
     /// <see cref="UiCue"/>. A hold verb's keycap (scan, cut, weld, fold down) wears a thin ring, faint at rest so the
-    /// key reads as one to hold, that fills while the hold runs.
+    /// key reads as one to hold, that fills while the hold runs. A standing chip (the hitch of a tow load) reads dim
+    /// "Get closer" while out of reach, its verb once in reach, and the cable's release while 07 tows.
     /// </summary>
     internal sealed class ContextPrompt
     {
@@ -38,7 +39,9 @@ namespace MoonProject.UI
         private readonly float _cardGap;
         private readonly float _screenMargin;
         private readonly float _followHalfLife;
+        private readonly float _notReadyOpacity;
         private float _lift;
+        private string _standingKey;
 
         /// <param name="cards">The cards the prompt keeps clear of when its point sits under one.</param>
         public ContextPrompt(UiLayout layout, PromptSettings settings, PromptDirector director, IViewCamera view,
@@ -62,6 +65,7 @@ namespace MoonProject.UI
             _cardGap = settings.CardGap;
             _screenMargin = settings.ScreenMargin;
             _followHalfLife = settings.FollowHalfLife;
+            _notReadyOpacity = settings.NotReadyOpacity;
             int kinds = 0;
             foreach (InteractionKind kind in Enum.GetValues(typeof(InteractionKind)))
             {
@@ -117,8 +121,9 @@ namespace MoonProject.UI
         /// <param name="primary">The gameplay's most relevant action right now.</param>
         /// <param name="device">The active device, for the glyph.</param>
         /// <param name="panelSize">Size of the UI panel (the screen in panel units).</param>
+        /// <param name="towing">07 tows a load: the hitch chip offers the cable's release.</param>
         public void Tick(float deltaTime, bool gateOpen, bool slotGranted, InteractionHint primary,
-            InputDeviceKind device, Vector2 panelSize)
+            InputDeviceKind device, Vector2 panelSize, bool towing)
         {
             _director.Step(deltaTime, gateOpen, primary, _reveal.IsHidden, slotGranted);
             PromptEntry entry = _director.Entry;
@@ -127,15 +132,18 @@ namespace MoonProject.UI
             bool placeChanged = step != _setStep || count != _setCount;
             _setStep = step;
             _setCount = count;
+            string standingKey = StandingKey(entry, primary, towing);
+            bool standingChanged = !string.Equals(standingKey, _standingKey, StringComparison.Ordinal);
+            _standingKey = standingKey;
             if (entry != null)
             {
-                if (_director.Started || placeChanged)
+                if (_director.Started || placeChanged || standingChanged)
                 {
                     WriteWord(entry);
                 }
 
                 _glyph.Set(GlyphOf(entry, device), device);
-                ShowKeycap(entry.Kind != InteractionKind.Rack);
+                ShowKeycap(entry.Kind != InteractionKind.Rack && !OutOfReach);
             }
 
             ShowHold(entry, primary);
@@ -184,6 +192,30 @@ namespace MoonProject.UI
             Rect chip = _chip.worldBound;
             Vector2 toward = target - chip.center;
             _caret.Point(chip.size, viewport.z < 0f ? -toward : toward);
+        }
+
+        /// <summary>True while the standing chip on screen reads "Get closer": no key yet, only where to go.</summary>
+        private bool OutOfReach => ReferenceEquals(_standingKey, UiKeys.HintGetCloser);
+
+        /// <summary>
+        /// The word of a standing chip in its present state ("Get closer", its verb, or the release while towing);
+        /// null for any other chip, or while its hint is not the one shown.
+        /// </summary>
+        private string StandingKey(PromptEntry entry, InteractionHint primary, bool towing)
+        {
+            if (entry == null || !entry.Standing || primary.Kind != entry.Kind)
+            {
+                return null;
+            }
+
+            if (!primary.Ready)
+            {
+                return UiKeys.HintGetCloser;
+            }
+
+            return towing && entry.Kind == InteractionKind.Tether
+                ? UiKeys.HintTetherRelease
+                : _wordKeys[(int)entry.Kind];
         }
 
         /// <summary>The keycap shows for a verb; the rack's chip, which only names a part, has none.</summary>
@@ -272,6 +304,14 @@ namespace MoonProject.UI
         /// </summary>
         private void WriteWord(PromptEntry entry)
         {
+            _word.style.opacity = OutOfReach ? _notReadyOpacity : 1f;
+            if (OutOfReach)
+            {
+                // Out of reach there is nothing to do to it yet: only where to go.
+                _word.text = _localization.Get(UiKeys.HintGetCloser);
+                return;
+            }
+
             if (entry.Kind == InteractionKind.Rack)
             {
                 // The rack's chip names a goal, not a verb: the part and where 07 saw it.
@@ -279,7 +319,7 @@ namespace MoonProject.UI
                 return;
             }
 
-            string verb = _localization.Get(_wordKeys[(int)entry.Kind]);
+            string verb = _localization.Get(_standingKey ?? _wordKeys[(int)entry.Kind]);
             if (entry.Kind == InteractionKind.Scan && _setCount > 1)
             {
                 // The piece's place in its set (Scan 1/2) lives on the one chip the world shows.

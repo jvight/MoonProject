@@ -92,8 +92,8 @@ namespace MoonProject.UI.Tests
         {
             foreach (InteractionKind kind in new[]
                      {
-                         InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Tether,
-                         InteractionKind.Install, InteractionKind.Transmit,
+                         InteractionKind.OpenBuild, InteractionKind.FitPart, InteractionKind.Install,
+                         InteractionKind.Transmit,
                      })
             {
                 SetUp();
@@ -107,6 +107,27 @@ namespace MoonProject.UI.Tests
                 Run(_settings.RepeatCooldown + 1f, Ready(kind));
                 Assert.IsFalse(_director.WantsShown, $"{kind}: used, it is learned for good");
             }
+        }
+
+        [Test]
+        public void TheHitchChip_Stands_OutOfReachToo_ThroughItsUse_AndComesBackEveryTime()
+        {
+            Assert.IsTrue(_settings.Find(InteractionKind.Tether).Standing);
+            var outOfReach = new InteractionHint(InteractionKind.Tether, Site, false);
+            Assert.IsTrue(_director.Wants(outOfReach), "out of reach it still claims the slot (dim, Get closer)");
+            Run(1f, outOfReach);
+            Assert.AreEqual(InteractionKind.Tether, _director.Displayed, "it shows before the hitch is in reach");
+            Run(_settings.MaxShowSeconds * 4f, Ready(InteractionKind.Tether));
+            Assert.IsTrue(_director.WantsShown, "no time limit");
+
+            _director.NotifyUsed(InteractionKind.Tether);
+            Run(1f, Ready(InteractionKind.Tether));
+            Assert.IsTrue(_director.WantsShown, "hooked, it stays: its hint now offers the release");
+
+            Run(1f, InteractionHint.None);
+            Assert.IsFalse(_director.WantsShown, "the hint gone, it goes");
+            Run(1f, outOfReach);
+            Assert.IsTrue(_director.WantsShown, "never retired and never resting: the next load shows it at once");
         }
 
         [Test]

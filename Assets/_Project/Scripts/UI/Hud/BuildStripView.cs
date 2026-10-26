@@ -97,6 +97,7 @@ namespace MoonProject.UI
         private InputDeviceKind _shownDevice = (InputDeviceKind)(-1);
         private InputDeviceKind _stepDevice = (InputDeviceKind)(-1);
         private PlacementReason _shownReason = PlacementReason.Valid;
+        private string _shownBlocker = string.Empty;
         private bool _stale = true;
         private int _lastPickFrame = -1;
 
@@ -264,7 +265,7 @@ namespace MoonProject.UI
             bool onScreen = false;
             if (wantsReason)
             {
-                RefreshReason(controller.CandidateReason);
+                RefreshReason(controller.CandidateReason, controller.CandidateBlockerNameKey);
                 Vector3 anchorWorld = controller.CandidatePose.Position + Vector3.up * ReasonAnchorHeightOffset;
                 onScreen = _reasonAnchor.Track(anchorWorld, panelSize, deltaTime, _reasonReveal.IsHidden);
             }
@@ -712,16 +713,21 @@ namespace MoonProject.UI
             }
         }
 
-        private void RefreshReason(PlacementReason reason)
+        /// <summary>
+        /// The reason the ghost cannot go here, above it; a real overlap names what is in the way ("Blocked by: Charging
+        /// Pad"), so the player knows what to move. Written only when the reason or the blocker changes.
+        /// </summary>
+        private void RefreshReason(PlacementReason reason, string blockerNameKey)
         {
-            if (!_stale && reason == _shownReason)
+            if (!_stale && reason == _shownReason &&
+                string.Equals(blockerNameKey, _shownBlocker, StringComparison.Ordinal))
             {
                 return;
             }
 
-            string key = UiKeys.PlacementReasonKey(reason);
-            _layout.BuildReasonText.text = key != null ? _localization.Get(key) : string.Empty;
+            _layout.BuildReasonText.text = PlacementReasonText.Of(reason, blockerNameKey, _localization);
             _shownReason = reason;
+            _shownBlocker = blockerNameKey;
         }
 
         /// <summary>

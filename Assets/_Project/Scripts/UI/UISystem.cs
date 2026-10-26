@@ -607,8 +607,9 @@ namespace MoonProject.UI
             _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
                 ? PickUpGraceSeconds
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
+            bool towing = _services.TryGetTowLine(out ITowLine towLine) && towLine.IsTowing;
             _prompt.Tick(deltaTime, PromptsOpen(paused), holder == PromptHolder.Chip, _services.Hints.Primary, device,
-                panelSize);
+                panelSize, towing);
             _services.TryGetAnswer(out IAnswerStatus answer);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize, answer);
             _readout.Tick(hudTime, holder == PromptHolder.Readout);

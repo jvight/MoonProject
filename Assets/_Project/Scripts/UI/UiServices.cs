@@ -18,6 +18,7 @@ namespace MoonProject.UI
         private ISupplyPurposes _purposes;
         private IAnswerStatus _answer;
         private ICallSource _call;
+        private ITowLine _towLine;
 
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
@@ -104,6 +105,21 @@ namespace MoonProject.UI
 
         /// <summary>What a weld takes from 07's battery: the build menu says it (optional in isolated test rigs).</summary>
         public IWeldEnergy WeldEnergy { get; }
+
+        /// <summary>
+        /// 07's tow cable (the hitch chip turns to its release while towing), from the GameContext, looked up until
+        /// Gameplay has registered it (false meanwhile, as in isolated test rigs).
+        /// </summary>
+        public bool TryGetTowLine(out ITowLine towLine)
+        {
+            if (_towLine == null && _context != null)
+            {
+                _context.TryGet(out _towLine);
+            }
+
+            towLine = _towLine;
+            return towLine != null;
+        }
 
         /// <summary>
         /// Where the answer to the call stands (the hold ring at the mast reads it), from the GameContext, looked up

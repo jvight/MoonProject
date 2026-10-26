@@ -51,6 +51,10 @@
             "text": "Drive"
         },
         {
+            "key": "ui.hint.get_closer",
+            "text": "Get closer"
+        },
+        {
             "key": "ui.controls.look",
             "text": "Look"
         },
@@ -599,6 +603,10 @@
             "text": "Something's in the way"
         },
         {
+            "key": "build.reason.overlaps_by",
+            "text": "Blocked by: {0}"
+        },
+        {
             "key": "build.reason.close",
             "text": "Too close"
         },
@@ -993,6 +1001,10 @@
         {
             "key": "hint.tether",
             "text": "Hook cable"
+        },
+        {
+            "key": "hint.tether.release",
+            "text": "Release cable"
         },
         {
             "key": "hint.install",
