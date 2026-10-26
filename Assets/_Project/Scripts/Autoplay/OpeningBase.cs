@@ -101,6 +101,12 @@ namespace MoonProject.Autoplay
         /// <summary>Tows the bot tries before the module counts as stuck (a snag lets it go; a player hooks again).</summary>
         private const int TowAttempts = 3;
 
+        /// <summary>How far the bank's footprint stands off the pad's bare footprint in the owner's softlock case (m).</summary>
+        private const float BankEdgeGapMetres = 0.2f;
+
+        /// <summary>Seconds the module is given to settle after it is set down.</summary>
+        private const float ModuleSettleSeconds = 1f;
+
         /// <summary>Seconds the pad may take to take 07 in once it rests there (a full 07 waits out the rest time).</summary>
         private const float DuskSeconds = 15f;
 
@@ -983,11 +989,16 @@ namespace MoonProject.Autoplay
                 () => "The winch stands " + DriveSteering.FlatDistance(winch.position, hitch)
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the hitch.");
             Vector3 fromHome = Flat(module.position - Pad()).normalized;
+            // The cable lets go only by the tether key: 07 stops as the line says the load is home, a few metres out,
+            // so the module does not trail in hard against the pad.
             yield return _bot.DriveTo(Flat(Pad()) + fromHome * HomeStop, HomeArrive, "home to the apron, towing",
-                DriveSeconds);
-            yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the winch to let the module go on the apron",
+                DriveSeconds, () => G.Tow.LoadAtHome);
+            yield return _bot.Until(() => G.Tow.LoadAtHome, FollowSeconds, "the load to be home on the apron",
                 () => "The module stands " + DriveSteering.FlatDistance(module.position, Pad())
                     .ToString("0.0", CultureInfo.InvariantCulture) + " m from the apron's centre.");
+            _bot.Idle();
+            yield return _bot.TapRightButton();
+            yield return _bot.Until(() => !G.Tow.IsTowing, FollowSeconds, "the tether key to let the module go at home");
         }
 
         /// <summary>
@@ -1020,6 +1031,53 @@ namespace MoonProject.Autoplay
         }
 
         /// <summary>Where the module stands now: the battery bank is built on it.</summary>
+        public IEnumerator SetTheModuleBesideThePad()
+        {
+            if (!G.Tow.TryFindLoad(TowLoads.PowerModule, out Transform module))
+            {
+                _bot.Fail("the power module is gone: it cannot be set beside the pad.");
+                yield break;
+            }
+
+            PlacedStructure pad = default;
+            bool padBuilt = false;
+            foreach (PlacedStructure structure in G.PlacedBase.Structures)
+            {
+                if (structure.Definition.Id == StructureIds.ChargingPad && structure.IsBuilt)
+                {
+                    pad = structure;
+                    padBuilt = true;
+                }
+            }
+
+            if (!padBuilt || !G.Building.Catalog.TryGet(StructureIds.BatteryBank, out StructureDefinition bank))
+            {
+                _bot.Fail("no built pad or no battery bank definition to set the module beside.");
+                yield break;
+            }
+
+            // The pad's own axes: the module goes out along the one nearest to where it lies, so that the bank's
+            // footprint ends BankEdgeGapMetres off the pad's bare footprint.
+            Quaternion yaw = Quaternion.Euler(0f, pad.Pose.Yaw, 0f);
+            Vector3 right = yaw * Vector3.right;
+            Vector3 forward = yaw * Vector3.forward;
+            Vector3 away = Flat(module.position - pad.Pose.Position);
+            bool alongX = Mathf.Abs(Vector3.Dot(away, right)) >= Mathf.Abs(Vector3.Dot(away, forward));
+            Vector3 axis = alongX ? right * Mathf.Sign(Vector3.Dot(away, right))
+                : forward * Mathf.Sign(Vector3.Dot(away, forward));
+            float reach = (alongX ? pad.Definition.Width + bank.Width : pad.Definition.Depth + bank.Depth) * 0.5f +
+                          BankEdgeGapMetres;
+            Vector3 at = pad.Pose.Position + axis * reach;
+            at.y = module.position.y;
+            G.Tow.Restore(new TowSaveData
+            {
+                ids = new[] { TowLoads.PowerModule },
+                positions = new[] { at },
+                rotations = new[] { yaw },
+            });
+            yield return _bot.Wait(ModuleSettleSeconds);
+        }
+
         public Vector3 ModulePosition()
         {
             return G.Tow.TryFindLoad(TowLoads.PowerModule, out Transform module) ? module.position : Pad();
