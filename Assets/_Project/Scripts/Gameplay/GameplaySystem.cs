@@ -503,8 +503,7 @@ namespace MoonProject.Gameplay
                 PadLock.FaceOnRelease(opening);
                 DayEnd = new DayEndHold(context.Events);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
-                PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps,
-                    services.Visuals.FeelSprite, transform);
+                PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps);
                 return opening;
             }
             catch (InvalidOperationException exception)

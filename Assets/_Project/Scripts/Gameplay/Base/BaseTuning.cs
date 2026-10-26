@@ -165,18 +165,15 @@ namespace MoonProject.Gameplay
                  "into the far end. Shorter than the interval: one pulse on a cable at a time.")]
         [Range(0.5f, 6f)] [SerializeField] private float _pulseTravelSeconds = 2.4f;
 
-        [Tooltip("Metres across a pulse's soft glow at its brightest, mid-cable.")]
-        [Range(0.05f, 1f)] [SerializeField] private float _pulseSizeMetres = 0.32f;
+        [Tooltip("Metres along the cable a pulse's glow spreads, softly, inside the rubber lead.")]
+        [Range(0.3f, 2f)] [SerializeField] private float _pulseWidthMetres = 0.8f;
 
-        [Tooltip("Metres above the cable the pulse rides, so the cable never hides it.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _pulseLiftMetres = 0.08f;
-
-        [Tooltip("The pulse from the solar array while the Sun is up: pale sunlit gold (additive; under 1 so it never " +
-                 "clips).")]
-        [SerializeField] private Color _sunPulseColor = new Color(0.95f, 0.82f, 0.5f, 1f);
+        [Tooltip("The pulse from the solar array while the Sun is up: pale sunlit gold, glowing from inside the lead " +
+                 "(the shader keeps it under bloom).")]
+        [ColorUsage(false, true)] [SerializeField] private Color _sunPulseColor = new Color(1.05f, 0.86f, 0.52f, 1f);
 
         [Tooltip("The pulse from the battery bank at dusk and through the night: the base lamps' warm amber.")]
-        [SerializeField] private Color _bankPulseColor = new Color(0.9f, 0.55f, 0.24f, 1f);
+        [ColorUsage(false, true)] [SerializeField] private Color _bankPulseColor = new Color(1.1f, 0.58f, 0.22f, 1f);
 
         [Tooltip("How much a pulse lifts the lamp of the piece it reaches (the pad, fed by the array), on top of its " +
                  "glow: a soft breath of light, never a flash.")]
@@ -204,8 +201,7 @@ namespace MoonProject.Gameplay
         public int LampLightBudget => _lampLightBudget;
         public float PulseIntervalSeconds => _pulseIntervalSeconds;
         public float PulseTravelSeconds => _pulseTravelSeconds;
-        public float PulseSizeMetres => _pulseSizeMetres;
-        public float PulseLiftMetres => _pulseLiftMetres;
+        public float PulseWidthMetres => _pulseWidthMetres;
         public Color SunPulseColor => _sunPulseColor;
         public Color BankPulseColor => _bankPulseColor;
         public float PulseLampLift => _pulseLampLift;
