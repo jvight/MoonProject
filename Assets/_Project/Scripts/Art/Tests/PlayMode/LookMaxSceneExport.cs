@@ -19,6 +19,7 @@ namespace MoonProject.Art.PlayModeTests
     public static class LookMaxSceneExport
     {
         private const int SkyQueue = 2900;
+        private const float ParkedBeyond = 5000f;
         private static readonly string[] SkippedShaderWords = { "Sky", "Earth", "Glint", "Halo", "Beacon", "Hologram" };
 
         /// <summary>Writes scene.obj and scene.mtl into <paramref name="folder"/>; returns a summary line.</summary>
@@ -119,21 +120,27 @@ namespace MoonProject.Art.PlayModeTests
             bool hasUvs = uvs.Length == vertices.Length;
             obj.WriteLine($"o {Clean(renderer.name)}_{renderer.GetInstanceID() & 0x7fffffff}");
             var line = new StringBuilder();
+            // Some generated meshes park unused vertices at NaN or far out (the near rubble's hidden stones); they are
+            // written at the origin and every triangle that uses one is dropped
+            var finite = new bool[vertices.Length];
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 p = toWorld.MultiplyPoint3x4(vertices[i]);
-                obj.WriteLine($"v {F(p.z)} {F(-p.x)} {F(p.y)}");
+                finite[i] = IsFinite(p);
+                obj.WriteLine(finite[i] ? $"v {F(p.z)} {F(-p.x)} {F(p.y)}" : "v 0 0 0");
             }
 
             for (int i = 0; hasNormals && i < normals.Length; i++)
             {
                 Vector3 n = toWorld.MultiplyVector(normals[i]).normalized;
+                n = IsFinite(n) ? n : Vector3.up;
                 obj.WriteLine($"vn {F(n.z)} {F(-n.x)} {F(n.y)}");
             }
 
             for (int i = 0; hasUvs && i < uvs.Length; i++)
             {
-                obj.WriteLine($"vt {F(uvs[i].x)} {F(uvs[i].y)}");
+                Vector2 uv = Usable(uvs[i].x) && Usable(uvs[i].y) ? uvs[i] : Vector2.zero;
+                obj.WriteLine($"vt {F(uv.x)} {F(uv.y)}");
             }
 
             long written = 0;
@@ -153,6 +160,11 @@ namespace MoonProject.Art.PlayModeTests
                 int[] tris = arrays.Triangles[sub];
                 for (int t = 0; t < tris.Length; t += 3)
                 {
+                    if (!finite[tris[t]] || !finite[tris[t + 1]] || !finite[tris[t + 2]])
+                    {
+                        continue;
+                    }
+
                     line.Clear();
                     line.Append('f');
                     // Reversed: the frame change is a mirror
@@ -194,6 +206,16 @@ namespace MoonProject.Art.PlayModeTests
             public long Vertex = 1;
             public long Uv = 1;
             public long Normal = 1;
+        }
+
+        private static bool IsFinite(Vector3 v)
+        {
+            return Usable(v.x) && Usable(v.y) && Usable(v.z);
+        }
+
+        private static bool Usable(float value)
+        {
+            return !float.IsNaN(value) && Mathf.Abs(value) < ParkedBeyond;
         }
 
         private static string Clean(string name)
