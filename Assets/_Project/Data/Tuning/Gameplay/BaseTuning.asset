@@ -67,8 +67,8 @@ MonoBehaviour:
   _lampLightBudget: 4
   _pulseIntervalSeconds: 3.6
   _pulseTravelSeconds: 2.4
-  _pulseWidthMetres: 0.8
-  _sunPulseColor: {r: 1.05, g: 0.86, b: 0.52, a: 1}
+  _pulseWidthMetres: 1.1
+  _sunPulseColor: {r: 1.68, g: 1.376, b: 0.832, a: 1}
   _bankPulseColor: {r: 1.1, g: 0.58, b: 0.22, a: 1}
   _pulseLampLift: 0.35
   _pulseLampSeconds: 1.1
