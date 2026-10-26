@@ -36,10 +36,11 @@ MonoBehaviour:
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2
   _stargazeFallHalfLife: 0.4
-  _stargazeDelay: 3
+  _stargazeDelay: 8
   _stargazeBeginShare: 0.6
   _stargazeHoldShare: 0.3
   _stargazeMaxSpeed: 0.3
+  _autoRecenter: 0
   _recenterDelay: 1.5
   _stickRecenterDelay: 1.5
   _recenterMinSpeed: 2
@@ -365,19 +366,6 @@ MonoBehaviour:
     _breathDistancePeriod: 29
   _heldShotClearance: 0.5
   _heldShotYawStep: 25
-  _cutFrameMinStages: 3
-  _cutFramePushIn: 0.06
-  _cutFrameLower: 0.3
-  _cutFrameSide: 1.2
-  _cutFrameBack: 2.4
-  _cutFrameInSeconds: 1
-  _cutFrameOutSeconds: 1.2
-  _digFrameRise: 0.5
-  _digFrameInSeconds: 1.2
-  _digFrameOutSeconds: 1
-  _digFrameGentleShare: 0.5
-  _digFrameGentleSeconds: 2
-  _cutFrameHandBackSeconds: 0.3
   _eveningHoldSeconds: 11
   _eveningFillHoldMax: 16
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
@@ -417,11 +405,4 @@ MonoBehaviour:
   _faceInspectHeadCounterRollMax: 8
   _buildFrameMaxRate: 20
   _buildFrameEaseAngle: 10
-  _buildFrameElevation: 22
-  _buildFrameInSeconds: 0.9
-  _buildFrameOutSeconds: 0.9
-  _buildFrameFollowHalfLife: 0.18
-  _buildFrameLookShare: 0.25
-  _buildFrameMaxLookShift: 1.4
-  _buildFramePullBack: 0.12
-  _buildFrameScreenY: 0.08
+  _buildFrameScreenMargin: 0.1

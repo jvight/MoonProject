@@ -136,12 +136,11 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>
         /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
-        /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up. <paramref name="wideShotDelay"/>
-        /// (seconds) shortens the rest before the wide shot opens, so sessions need not wait the shipped delay.
+        /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up.
         /// </summary>
         /// <param name="prepare">Sets what a loaded game had (anchors, saved sections) before 07 initialises.</param>
         public static TestRover Spawn(TestWorld world, Vector3 position, float yaw, bool asleep = false,
-            float wideShotDelay = 0f, Action<TestRover> prepare = null)
+            Action<TestRover> prepare = null)
         {
             var tuning = ScriptableObject.CreateInstance<RoverTuning>();
             var rigTuning = ScriptableObject.CreateInstance<RoverRigTuning>();
@@ -157,13 +156,6 @@ namespace MoonProject.Rover.PlayModeTests
             var character = new SerializedObject(characterTuning);
             character.FindProperty("_sleepOnBoot").boolValue = asleep;
             character.ApplyModifiedPropertiesWithoutUndo();
-            if (wideShotDelay > 0f)
-            {
-                var cameraSettings = new SerializedObject(cameraTuning);
-                cameraSettings.FindProperty("_wideShot._delay").floatValue = wideShotDelay;
-                cameraSettings.ApplyModifiedPropertiesWithoutUndo();
-            }
-
             var root = new GameObject("TestRover");
             root.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             var controller = root.AddComponent<RoverController>();

@@ -46,6 +46,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float ViewportMaxX = 0.78f;
         private const float ViewportMinY = 0.14f;
         private const float ViewportMaxY = 0.78f;
+
+        /// <summary>The ghost need only be in view (the camera turns only for an off-screen ghost, and stops once it is in).</summary>
+        private const float GhostInViewMin = 0.04f;
+        private const float GhostInViewMax = 0.96f;
         private const int Width16x9 = 1280;
         private const int Height16x9 = 720;
         private const int Width21x9 = 1680;
@@ -172,10 +176,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 1f,
                 "Un-snapped ghost leaves the apron bay.");
 
-            // Leaving build mode eases the build framing back to zero.
+            // Leaving build mode ends the build framing.
             build.Close();
-            yield return new WaitForSeconds(rig.BuildFraming.Weight > 0f ? 1.2f : 0.2f);
-            Assert.Less(rig.BuildFraming.Weight, 0.05f, "Leaving build mode eases build framing back.");
+            yield return new WaitForSeconds(0.2f);
+            Assert.IsFalse(rig.BuildFraming.IsActive, "Leaving build mode ends the build framing.");
 
             // --- 2. B7/B8 Solar Array West of the Pad ---
             Vector3 arraySpot = Flat(apron) + Vector3.left * ArrayWestSpacing;
@@ -252,8 +256,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(ghostVp.z, 0f, $"Ghost is in front of the camera ({label}).");
             Assert.That(roverVp.x, Is.InRange(ViewportMinX, ViewportMaxX), $"07 X is framed ({label}).");
             Assert.That(roverVp.y, Is.InRange(ViewportMinY, ViewportMaxY), $"07 Y is framed ({label}).");
-            Assert.That(ghostVp.x, Is.InRange(ViewportMinX, ViewportMaxX), $"Ghost X is framed ({label}).");
-            Assert.That(ghostVp.y, Is.InRange(ViewportMinY, ViewportMaxY), $"Ghost Y is framed ({label}).");
+            Assert.That(ghostVp.x, Is.InRange(GhostInViewMin, GhostInViewMax), $"Ghost X is in view ({label}).");
+            Assert.That(ghostVp.y, Is.InRange(GhostInViewMin, GhostInViewMax), $"Ghost Y is in view ({label}).");
         }
 
         private static void CapturePair(Camera lens, string prefix, string phase)

@@ -118,9 +118,9 @@ namespace MoonProject.Rover
         [Range(0.05f, 3f)]
         [SerializeField] private float _stargazeFallHalfLife = 0.4f;
 
-        [Tooltip("Seconds of rest while looking up before the stargazing beat begins (HUD fades, music thins).")]
+        [Tooltip("Seconds of rest while looking up, on a night 07 has not gazed on yet, before the stargazing beat begins (HUD fades, music thins): a rare moment, so a long rest.")]
         [Range(0.5f, 15f)]
-        [SerializeField] private float _stargazeDelay = 3f;
+        [SerializeField] private float _stargazeDelay = 8f;
 
         [Tooltip("How far up the view must look (0..1 between start and full elevation) for the beat to begin.")]
         [Range(0.1f, 1f)]
@@ -136,6 +136,10 @@ namespace MoonProject.Rover
         [SerializeField] private float _stargazeMaxSpeed = 0.3f;
 
         [Header("Following and auto-recenter")]
+        [Tooltip("When on, the view eases back behind 07 by itself while it drives, after the delays below. Off: the "
+            + "player's orbit stays exactly where they left it, and only the recenter button brings it back.")]
+        [SerializeField] private bool _autoRecenter;
+
         [Tooltip("Seconds after the mouse stops before the camera may ease back behind 07.")]
         [Range(0.5f, 20f)]
         [SerializeField] private float _recenterDelay = 1.5f;
@@ -464,62 +468,6 @@ namespace MoonProject.Rover
         [Range(0.1f, 1.5f)]
         [SerializeField] private float _gazePanHalfLife = 0.5f;
 
-        [Tooltip("The nudge toward the next action's object when it is off screen (G5): one soft eased turn of the camera " +
-                 "toward it, with 07 in the foreground; any look or drive input ends it.")]
-        [SerializeField] private CameraMomentSettings _nudgeMoment =
-            new CameraMomentSettings(1f, 0f, 1.6f, 0f, 0f, 1f, 0f, 180f, 0f, 0f, 100000f);
-
-        [Tooltip("Fastest the nudge turns the camera (deg/s).")]
-        [Range(5f, 40f)]
-        [SerializeField] private float _nudgeSweep = 20f;
-
-        [Tooltip("Seconds the nudge gives the turn toward the object.")]
-        [Range(0.8f, 3f)]
-        [SerializeField] private float _nudgeTravelSeconds = 1.5f;
-
-        [Tooltip("Seconds the nudge holds the object before easing back.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _nudgeHoldSeconds = 0.5f;
-
-        [Tooltip("How far (deg) short of the object's bearing the nudge settles: the object comes into the frame's edge, " +
-                 "not its centre.")]
-        [Range(0f, 50f)]
-        [SerializeField] private float _nudgeSlack = 30f;
-
-        [Tooltip("Furthest (deg) the object may lie from where the camera looks for the camera to turn at all; behind that, " +
-                 "07's head turn carries the look.")]
-        [Range(30f, 180f)]
-        [SerializeField] private float _nudgeMaxBearing = 150f;
-
-        [Tooltip("Seconds a nudge asked for while another shot has the camera waits for it to end, then fires; older than " +
-                 "this it is dropped (the player has moved on).")]
-        [Range(2f, 60f)]
-        [SerializeField] private float _nudgePendingSeconds = 15f;
-
-        [Tooltip("Degrees per second of 07's own turn under which it counts as still: while it turns faster (the in-place " +
-                 "turn on the pad that faces the array) a nudge waits, then looks again where the target is.")]
-        [Range(1f, 60f)]
-        [SerializeField] private float _nudgeTurnRate = 8f;
-
-        [Tooltip("Seconds 07's heading must stay still before a waiting nudge is looked at again.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _nudgeTurnSettleSeconds = 0.3f;
-
-        [Tooltip("Closest (m) an object may lie to 07 for the camera to nudge toward it; closer than this, 07's head look is enough.")]
-        [Range(0f, 40f)]
-        [SerializeField] private float _nudgeMinDistance = 12f;
-
-        [Tooltip("Share of the view's width and height, from each edge, a target must lie inside to count as on screen " +
-                 "(no nudge, no head turn).")]
-        [Range(0f, 0.3f)]
-        [SerializeField] private float _nudgeScreenMargin = 0.08f;
-
-        [Tooltip("07 charging on its pad: the camera eases (calm, about 20 deg/s) to a closer three-quarter rear frame " +
-                 "where the lamp bar and the clamps read, instead of pulling out to the wide shot, and eases back when " +
-                 "the charge ends. Any look or drive input gives control back at once.")]
-        [SerializeField] private CameraMomentSettings _dockMoment =
-            new CameraMomentSettings(2.4f, 0f, 2.4f, 0.1f, 0.6f, 1f, 32f, 32f, 5f, -0.35f, 100000f);
-
         [Tooltip("The headlamp fitted live at the rack: the camera eases round to a calm front three-quarter frame of " +
                  "07's head, so the pods clamping and the lenses warming read, then eases back. Any look or drive input " +
                  "gives control back at once.")]
@@ -534,10 +482,6 @@ namespace MoonProject.Rover
         [Tooltip("Metres from 07 the lamp-fit frame's look direction is placed (only its bearing matters).")]
         [Range(1f, 20f)]
         [SerializeField] private float _lampFitSubjectMetres = 5f;
-
-        [Tooltip("Metres to 07's side the dock frame looks toward: it sets which side the three-quarter frame sits on.")]
-        [Range(1f, 20f)]
-        [SerializeField] private float _dockSideMetres = 6f;
 
         [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
             + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
@@ -563,10 +507,6 @@ namespace MoonProject.Rover
         [Range(2f, 6f)]
         [SerializeField] private float _gentleMinShotBlend = 2f;
 
-        [Tooltip("Speed of the wide shot's slow breathing while the Gentle camera is on (1 = as tuned).")]
-        [Range(0.1f, 1f)]
-        [SerializeField] private float _gentleBreathRate = 0.5f;
-
         [Tooltip("Lowest look sensitivity multiplier the settings menu can choose while the Gentle camera is on.")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _gentleMinSensitivity = 0.15f;
@@ -575,11 +515,6 @@ namespace MoonProject.Rover
         [Tooltip("The fresh game's wake through 07's own eye (cutscenes §1), the short wake and the title's frames "
             + "(M3-09 Part A).")]
         [SerializeField] private OpeningSettings _opening = new OpeningSettings();
-
-        [Header("Wide shot")]
-        [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
-            + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
-        [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
 
         [Header("The dock's evening")]
         [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
@@ -595,61 +530,6 @@ namespace MoonProject.Rover
         [Tooltip("Step (deg) the evening frame turns either way, when scenery blocks the view, to find a clear one.")]
         [Range(5f, 60f)]
         [SerializeField] private float _heldShotYawStep = 25f;
-
-        [Header("Feel: the cut (docs/design/feel-pass.md)")]
-        [Tooltip("The charge-up's push-in (0.5.5 §5.6): the fewest stages a piece needs for a fresh charge to earn it "
-            + "(3: large and hull plates). Small and medium pieces, warm charges and the Gentle camera never move it.")]
-        [Range(1, 3)]
-        [SerializeField] private int _cutFrameMinStages = 3;
-
-        [Tooltip("The push-in: how much closer the camera eases (share of its distance: 0.06 = 6%).")]
-        [Range(0f, 0.3f)]
-        [SerializeField] private float _cutFramePushIn = 0.06f;
-
-        [Tooltip("The push-in: how far (m) lower the camera eases.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _cutFrameLower = 0.3f;
-
-        [Tooltip("The push-in turns toward 07's shoulder: how far (m) out to the side the beam runs to the eye looks "
-            + "from, so 07's head never hides the beam.")]
-        [Range(0.3f, 3f)]
-        [SerializeField] private float _cutFrameSide = 1.2f;
-
-        [Tooltip("How far (m) behind 07's emitter, along the beam, the shoulder's eye looks from.")]
-        [Range(0.5f, 6f)]
-        [SerializeField] private float _cutFrameBack = 2.4f;
-
-        [Tooltip("Seconds the push-in takes to ease in over the brace and build (at most 1 s), eased at both ends.")]
-        [Range(0.2f, 1f)]
-        [SerializeField] private float _cutFrameInSeconds = 1f;
-
-        [Tooltip("Seconds it takes to ease back after the fold or a release.")]
-        [Range(0.2f, 4f)]
-        [SerializeField] private float _cutFrameOutSeconds = 1.2f;
-
-        [Tooltip("The dig's work framing (feel-pass §3.1): how far (m) above 07's emitter its shoulder camera sits.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _digFrameRise = 0.5f;
-
-        [Tooltip("Seconds the dig's framing takes to ease in from its charge-up (07 stands still, so slow is calm).")]
-        [Range(0.2f, 4f)]
-        [SerializeField] private float _digFrameInSeconds = 1.2f;
-
-        [Tooltip("Seconds the dig's framing takes to ease back after the relic comes up or a release.")]
-        [Range(0.2f, 4f)]
-        [SerializeField] private float _digFrameOutSeconds = 1f;
-
-        [Tooltip("Gentle camera: the share of the dig framing's side offset and rise it uses.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _digFrameGentleShare = 0.5f;
-
-        [Tooltip("Gentle camera: seconds the dig's framing takes to ease in.")]
-        [Range(0.2f, 6f)]
-        [SerializeField] private float _digFrameGentleSeconds = 2f;
-
-        [Tooltip("Seconds it takes to hand back when the player looks or drives (quick: their choice wins).")]
-        [Range(0.05f, 1f)]
-        [SerializeField] private float _cutFrameHandBackSeconds = 0.3f;
 
         [Tooltip("Seconds from the evening shot opening until it eases back (any drive or look input ends it early).")]
         [Range(3f, 30f)]
@@ -841,45 +721,18 @@ namespace MoonProject.Rover
         [SerializeField] private float _faceInspectHeadCounterRollMax = 8f;
 
         [Header("Build mode framing")]
-        [Tooltip("Fastest the chase camera turns or tilts (deg/s) when easing to frame 07 and the placing ghost in build mode (calm, <= 20 deg/s).")]
+        [Tooltip("Fastest the chase view turns (deg/s) toward an off-screen placing ghost: one gentle ease, ended the "
+            + "moment the ghost is in view or the player touches the view or the wheel.")]
         [Range(5f, 20f)]
         [SerializeField] private float _buildFrameMaxRate = 20f;
 
-        [Tooltip("Degrees before the ghost's bearing over which build-mode yaw framing eases out to a stop.")]
+        [Tooltip("Degrees before the ghost's bearing over which the build-mode turn eases out to a stop.")]
         [Range(1f, 45f)]
         [SerializeField] private float _buildFrameEaseAngle = 10f;
 
-        [Tooltip("Modest chase elevation (deg, never top-down) the camera eases to in build mode so both 07 and the ground ghost or apron sit in frame.")]
-        [Range(14f, 32f)]
-        [SerializeField] private float _buildFrameElevation = 22f;
-
-        [Tooltip("Seconds over which build-mode target framing eases in when entering Placing.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _buildFrameInSeconds = 0.9f;
-
-        [Tooltip("Seconds over which build-mode framing eases back to the normal chase camera when leaving Placing.")]
-        [Range(0.2f, 3f)]
-        [SerializeField] private float _buildFrameOutSeconds = 0.9f;
-
-        [Tooltip("Half-life (s) of the look target following the ghost as it moves on the ground in build mode.")]
-        [Range(0.05f, 1f)]
-        [SerializeField] private float _buildFrameFollowHalfLife = 0.18f;
-
-        [Tooltip("Share of the horizontal offset from 07 to the placing ghost added to the chase look point so both 07 and the ghost or apron sit framed together.")]
-        [Range(0f, 0.6f)]
-        [SerializeField] private float _buildFrameLookShare = 0.25f;
-
-        [Tooltip("Largest horizontal look-point shift (m) toward the placing ghost in build mode.")]
-        [Range(0f, 4f)]
-        [SerializeField] private float _buildFrameMaxLookShift = 1.4f;
-
-        [Tooltip("Extra chase distance (share of normal distance) while framing 07 and the placing ghost in build mode.")]
-        [Range(0f, 0.5f)]
-        [SerializeField] private float _buildFramePullBack = 0.12f;
-
-        [Tooltip("Vertical screen composition (0 = centre, +y = lower) while framing 07 and the placing ghost in build mode.")]
-        [Range(-0.1f, 0.25f)]
-        [SerializeField] private float _buildFrameScreenY = 0.08f;
+        [Tooltip("How far in from the screen's edge (a share of its size) the ghost must be to count as in view.")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _buildFrameScreenMargin = 0.1f;
 
         public float MouseSensitivity => _mouseSensitivity;
 
@@ -938,6 +791,8 @@ namespace MoonProject.Rover
         public float StargazeHoldShare => Mathf.Min(_stargazeHoldShare, _stargazeBeginShare);
 
         public float StargazeMaxSpeed => _stargazeMaxSpeed;
+
+        public bool AutoRecenter => _autoRecenter;
 
         public float RecenterDelay => _recenterDelay;
 
@@ -1087,37 +942,11 @@ namespace MoonProject.Rover
 
         public float ReleasePanHalfLife => _gazePanHalfLife;
 
-        public CameraMomentSettings NudgeMoment => _nudgeMoment;
-
-        public float NudgeSweep => _nudgeSweep;
-
-        public float NudgeTravelSeconds => _nudgeTravelSeconds;
-
-        public float NudgeHoldSeconds => _nudgeHoldSeconds;
-
-        public float NudgeSlack => _nudgeSlack;
-
-        public float NudgeMaxBearing => _nudgeMaxBearing;
-
-        public float NudgePendingSeconds => _nudgePendingSeconds;
-
-        public float NudgeTurnRate => _nudgeTurnRate;
-
-        public float NudgeTurnSettleSeconds => _nudgeTurnSettleSeconds;
-
-        public float NudgeMinDistance => _nudgeMinDistance;
-
-        public float NudgeScreenMargin => _nudgeScreenMargin;
-
         public CameraMomentSettings LampFitMoment => _lampFitMoment;
 
         public float LampFitSwingDegrees => _lampFitSwingDegrees;
 
         public float LampFitSubjectMetres => _lampFitSubjectMetres;
-
-        public CameraMomentSettings DockMoment => _dockMoment;
-
-        public float DockSideMetres => _dockSideMetres;
 
         public CameraMomentSettings LadderMoment => _ladderMoment;
 
@@ -1129,10 +958,6 @@ namespace MoonProject.Rover
 
         public float GentleMinShotBlend => Mathf.Max(_gentleMinShotBlend, _minShotBlend);
 
-        public float GentleBreathRate => _gentleBreathRate;
-
-        public WideShotSettings WideShot => _wideShot;
-
         public WideShotSettings EveningShot => _eveningShot;
 
         public float EveningHoldSeconds => _eveningHoldSeconds;
@@ -1142,32 +967,6 @@ namespace MoonProject.Rover
         public float HeldShotClearance => _heldShotClearance;
 
         public float HeldShotYawStep => _heldShotYawStep;
-
-        public float CutFrameSide => _cutFrameSide;
-
-        public float CutFrameBack => _cutFrameBack;
-
-        public int CutFrameMinStages => _cutFrameMinStages;
-
-        public float CutFramePushIn => _cutFramePushIn;
-
-        public float CutFrameLower => _cutFrameLower;
-
-        public float CutFrameInSeconds => _cutFrameInSeconds;
-
-        public float CutFrameOutSeconds => _cutFrameOutSeconds;
-
-        public float CutFrameHandBackSeconds => _cutFrameHandBackSeconds;
-
-        public float DigFrameRise => _digFrameRise;
-
-        public float DigFrameInSeconds => _digFrameInSeconds;
-
-        public float DigFrameOutSeconds => _digFrameOutSeconds;
-
-        public float DigFrameGentleShare => _digFrameGentleShare;
-
-        public float DigFrameGentleSeconds => _digFrameGentleSeconds;
 
         public Vector3 PositionDamping => _positionDamping;
 
@@ -1259,20 +1058,7 @@ namespace MoonProject.Rover
 
         public float BuildFrameEaseAngle => _buildFrameEaseAngle;
 
-        public float BuildFrameElevation => _buildFrameElevation;
+        public float BuildFrameScreenMargin => _buildFrameScreenMargin;
 
-        public float BuildFrameInSeconds => _buildFrameInSeconds;
-
-        public float BuildFrameOutSeconds => _buildFrameOutSeconds;
-
-        public float BuildFrameFollowHalfLife => _buildFrameFollowHalfLife;
-
-        public float BuildFrameLookShare => _buildFrameLookShare;
-
-        public float BuildFrameMaxLookShift => _buildFrameMaxLookShift;
-
-        public float BuildFramePullBack => _buildFramePullBack;
-
-        public float BuildFrameScreenY => _buildFrameScreenY;
     }
 }

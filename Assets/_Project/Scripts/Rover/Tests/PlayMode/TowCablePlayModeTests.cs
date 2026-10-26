@@ -60,7 +60,7 @@ namespace MoonProject.Rover.PlayModeTests
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
             _line = new FakeTowLine();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f, false, 0f,
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f, false,
                 rover => rover.Context.Register<ITowLine>(_line));
         }
 

@@ -16,6 +16,7 @@ namespace MoonProject.Rover.Tests
         {
             _tuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
             _stargaze = new Stargaze(_tuning);
+            _stargaze.Arm();
         }
 
         [TearDown]
@@ -25,13 +26,14 @@ namespace MoonProject.Rover.Tests
         }
 
         /// <summary>Runs <paramref name="seconds"/>; returns how many times the beat switched.</summary>
-        private int Run(float seconds, float elevation, bool moving = false, bool free = true, float stillAtStart = 0f)
+        private int Run(float seconds, float elevation, bool moving = false, bool free = true, float stillAtStart = 0f,
+            bool looking = false)
         {
             int switches = 0;
             for (float t = 0f; t < seconds; t += Step)
             {
                 float still = moving ? 0f : stillAtStart + t;
-                switches += _stargaze.Step(elevation, still, moving, free, Step) ? 1 : 0;
+                switches += _stargaze.Step(elevation, still, moving, looking, free, Step) ? 1 : 0;
             }
 
             return switches;
@@ -72,6 +74,38 @@ namespace MoonProject.Rover.Tests
             Assert.Greater(_stargaze.Lift, 0.3f, "07's head eases down, it does not drop.");
             Run(2f, _tuning.StargazeFullElevation, moving: true);
             Assert.Less(_stargaze.Lift, 0.05f);
+        }
+
+        [Test]
+        public void AnyLookInput_EndsTheBeatAtOnce()
+        {
+            Run(_tuning.StargazeDelay + 1f, _tuning.StargazeFullElevation);
+            Assert.IsTrue(_stargaze.IsActive);
+            Assert.AreEqual(1, Run(Step * 2f, _tuning.StargazeFullElevation, looking: true));
+            Assert.IsFalse(_stargaze.IsActive);
+        }
+
+        [Test]
+        public void TheBeam_BeginsOnceANight_AndAgainOnlyAfterTheNextNightArms()
+        {
+            Run(_tuning.StargazeDelay + 1f, _tuning.StargazeFullElevation);
+            Assert.IsTrue(_stargaze.IsActive);
+            Run(0.5f, _tuning.StargazeFullElevation, moving: true);
+            Assert.IsFalse(_stargaze.IsActive);
+            Assert.IsFalse(_stargaze.Armed, "The night's gaze is spent.");
+
+            Assert.AreEqual(0, Run(_tuning.StargazeDelay + 2f, _tuning.StargazeFullElevation), "Resting again: not twice.");
+            Assert.Less(_stargaze.Lift, 0.05f, "Nor does 07's head lift for it.");
+
+            _stargaze.Arm();
+            Assert.AreEqual(1, Run(_tuning.StargazeDelay + 1f, _tuning.StargazeFullElevation));
+            Assert.IsTrue(_stargaze.IsActive, "A new night, a new gaze.");
+        }
+
+        [Test]
+        public void TheBeat_NeedsALongRest()
+        {
+            Assert.GreaterOrEqual(_tuning.StargazeDelay, 8f, "A rare moment waits at least eight seconds of stillness.");
         }
 
         [Test]

@@ -30,16 +30,6 @@ namespace MoonProject.Rover
             _fovWiden = fovWiden;
         }
 
-        [Header("Timing")]
-        [Tooltip("Seconds of uninterrupted rest (IRoverStillness, nothing else going on) before the frame opens.")]
-        [Range(2f, 60f)]
-        [SerializeField] private float _delay = 9f;
-
-        [Tooltip("Seconds of charging (07 stopped on the dock or a mast's ring) after which the frame opens, " +
-                 "sooner than the usual rest: charging is a calm stop.")]
-        [Range(0.5f, 10f)]
-        [SerializeField] private float _chargingDelay = 2f;
-
         [Tooltip("Seconds the drift out takes to all but settle (eased in and out, never a jolt).")]
         [Range(2f, 20f)]
         [SerializeField] private float _openSeconds = 8f;
@@ -47,14 +37,6 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the view takes to come back to the chase camera on drive or look input (eased, no cut).")]
         [Range(0.3f, 3f)]
         [SerializeField] private float _handBackSeconds = 0.8f;
-
-        [Tooltip("Seconds a memory card or liner note appearing holds the wide shot back (time to read it).")]
-        [Range(0f, 60f)]
-        [SerializeField] private float _cardQuietSeconds = 14f;
-
-        [Tooltip("Seconds an interaction (Bell's dial turned, an upgrade held at a station) holds the wide shot back.")]
-        [Range(0f, 60f)]
-        [SerializeField] private float _interactionQuietSeconds = 8f;
 
         [Header("Composition")]
         [Tooltip("Camera distance (m) from 07's follow point when nothing is in the way: 07 reads small.")]
@@ -169,17 +151,9 @@ namespace MoonProject.Rover
         [Range(5f, 120f)]
         [SerializeField] private float _breathDistancePeriod = 29f;
 
-        public float Delay => _delay;
-
-        public float ChargingDelay => _chargingDelay;
-
         public float OpenSeconds => _openSeconds;
 
         public float HandBackSeconds => _handBackSeconds;
-
-        public float CardQuietSeconds => _cardQuietSeconds;
-
-        public float InteractionQuietSeconds => _interactionQuietSeconds;
 
         public float Distance => _distance;
 

@@ -17,11 +17,9 @@ namespace MoonProject.Rover
     /// dips softly on landings; the player's Gentle camera stills both and slows every blend. Reads the rover only
     /// through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic or a relay mast's lamp
-    /// as it lights. When 07 has
-    /// rested a while (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
-    /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
-    /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, the tether, the radio-hop
-    /// list and interactions take precedence over it. When 07 is placed somewhere else
+    /// as it lights, always ended by the player's own look input. The dock's evening is a held wide frame, composed
+    /// against the analytic terrain (<see cref="ITerrainQuery"/>), published as <see cref="RoverWideShotChanged"/>.
+    /// When 07 is placed somewhere else
     /// (<see cref="RoverPlaced"/>) everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/>
     /// (gameplay aims from its centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the
     /// player's sensitivity and invert-Y).
@@ -48,7 +46,6 @@ namespace MoonProject.Rover
         /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
 
         /// <summary>The dock frame looks toward 07's right (deg from its heading): the camera sits behind-left of it.</summary>
-        private const float DockSideDegrees = 90f;
 
         /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
         private const float ShotWeightEpsilon = 0.01f;
@@ -82,18 +79,10 @@ namespace MoonProject.Rover
         private readonly CameraMoment _moment = new CameraMoment();
         private NearPropFade _nearFade;
         private readonly GazePan _gazePan = new GazePan();
-        private readonly GuidanceNudge _nudge = new GuidanceNudge();
         private readonly BuildFraming _buildFraming = new BuildFraming();
-        private readonly PendingNudge _pendingNudge = new PendingNudge();
         private readonly FaceCloseSequence _faceClose = new FaceCloseSequence();
         private FaceCloseDip _faceCloseDip;
-        private readonly TurnSettle _turnSettle = new TurnSettle();
-        private bool _driveCarriedIntoNudge;
-        private WideShot _wide;
-        private bool _wideSteersYaw;
         private bool _tethered;
-        private bool _hopListOpen;
-        private bool _paused;
         private bool _crawling;
         private float _crawl;
         private bool _towing;
@@ -122,10 +111,7 @@ namespace MoonProject.Rover
         private IInteractionFocus _focus;
         private readonly Vector3[] _focusPoints = new Vector3[MaxFocusPoints];
         private bool _evening;
-        private BeamFraming _beam;
         private bool _charging;
-        private float _chargingSeconds;
-        private bool _chargeAsks;
         private readonly FaceInspectSightLine _faceSight = new FaceInspectSightLine();
         private RoverBodyLanguage _faceInspectBody;
         private FaceInspectShot _faceInspectShot;
@@ -187,7 +173,6 @@ namespace MoonProject.Rover
         public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
-        public WideShot WideShot => _wide;
 
         /// <summary>How far the current camera moment has eased in, 0..1 (for tests and tooling).</summary>
         public float MomentWeight => _moment.Weight;
@@ -263,10 +248,13 @@ namespace MoonProject.Rover
             _orbitState = new CameraOrbit(_tuning);
             _framing = new TargetFraming(_tuning);
             _stargaze = new Stargaze(_tuning);
+            if (context.TryGet(out ISunlight sky) && sky.Phase == SkyPhase.Earthlit)
+            {
+                _stargaze.Arm();
+            }
+
             _opening = new WakeOpening(_tuning);
-            _wide = new WideShot(_tuning.WideShot);
             _look = new LookSettings(_tuning);
-            _beam = new BeamFraming(_tuning);
             if (_faceInspectBody == null && _rover is Component roverComponent)
             {
                 _faceInspectBody = roverComponent.GetComponentInChildren<RoverBodyLanguage>(true);
@@ -283,18 +271,12 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<ReleaseViewOpened>(OnReleaseViewOpened),
-                context.Events.Subscribe<NextStepChanged>(OnNextStepChanged),
                 context.Events.Subscribe<PartFitted>(OnPartFitted),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
-                context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
                 context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened),
                 context.Events.Subscribe<TetherAttached>(OnTetherAttached),
                 context.Events.Subscribe<TetherReleased>(OnTetherReleased),
-                context.Events.Subscribe<PauseChanged>(OnPauseChanged),
-                context.Events.Subscribe<UiCue>(OnUiCue),
-                context.Events.Subscribe<BellCued>(OnBellCued),
-                context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 context.Events.Subscribe<TowAttached>(OnTowAttached),
@@ -302,6 +284,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
                 context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
+                context.Events.Subscribe<SkyPhaseChanged>(OnSkyPhaseChanged),
                 context.Events.Subscribe<BuildPlacingChanged>(OnBuildPlacingChanged),
             };
             context.Register<IViewCamera>(this);
@@ -388,9 +371,7 @@ namespace MoonProject.Rover
             float blend = gentle ? _tuning.GentleMinShotBlend : _tuning.MinShotBlend;
             _orbitState.Gentle = gentle;
             _moment.MinBlend = blend;
-            _wide.MinBlend = blend;
             _held.MinBlend = blend;
-            _wide.BreathRate = gentle ? _tuning.GentleBreathRate : 1f;
         }
 
         /// <summary>Puts the camera straight behind the rover with no damping (spawn, placement).</summary>
@@ -449,7 +430,7 @@ namespace MoonProject.Rover
         private void StepWallCompression(float deltaTime, bool snap)
         {
             bool suppress = _faceInspectOpen || _faceInspectWeight > ShotWeightEpsilon || _opening.IsActive
-                || _wide.Weight > ShotWeightEpsilon || _held.Weight > ShotWeightEpsilon;
+                || _held.Weight > ShotWeightEpsilon;
             if (suppress)
             {
                 _wallCompressionTarget = snap ? 0f : Smoothing.Damp(_wallCompressionTarget, 0f, _tuning.WallLiftHalfLife, deltaTime);
@@ -512,40 +493,18 @@ namespace MoonProject.Rover
             }
 
             bool driving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-            if (_beam.Framing.IsActive && (viewInput || driving))
-            {
-                _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
-            }
-
-            if (!driving)
-            {
-                _driveCarriedIntoNudge = false;
-            }
-
-            // A drive key already held when a nudge began (the player is driving off the pad as the line appears)
-            // must not end it before it has turned; the next press, or any look input, does.
-            bool carried = IsNudgeMoment && _driveCarriedIntoNudge;
-            if (driving && !carried && (IsTowerMoment || _gazePan.IsActive || IsDockMoment || IsLampFitMoment))
+            if (driving && (IsTowerMoment || _gazePan.IsActive || IsLampFitMoment))
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
-            }
-
-            if (recenter && _wide.IsOpen)
-            {
-                HandBackWideShot();
             }
 
             _opening.Step(deltaTime);
             ApplyCameraRadius(_tuning.CameraRadius);
             StepFaceInspect(deltaTime);
             StepReleasePan(deltaTime);
-            _turnSettle.Step(RoverYaw(), deltaTime, _tuning.NudgeTurnRate, _tuning.NudgeTurnSettleSeconds);
-            StepPendingNudge();
             _moment.Step(deltaTime);
-            StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
-            _beam.Framing.Step(deltaTime);
             StepReleaseCarry(deltaTime);
             bool externalYaw = _buildFraming.DidBearingChangeExternally(_orbitState.Bearing);
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
@@ -554,7 +513,7 @@ namespace MoonProject.Rover
             StepWallCompression(deltaTime, false);
             StepFreeLookDamping(deltaTime);
             PlaceTarget(deltaTime, false);
-            StepStargaze(deltaTime);
+            StepStargaze(viewInput, deltaTime);
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
@@ -648,9 +607,9 @@ namespace MoonProject.Rover
                 descent = Mathf.Atan2(-velocity.y, airSpeed) * Mathf.Rad2Deg;
             }
 
-            bool mayRecenter = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f
+            bool mayRecenter = !_moment.IsActive && _held.Weight <= 0f
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling
-                && !_buildFraming.IsActive && _buildFraming.Weight <= 0f && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
+                && !_buildFraming.IsActive && (CursorLockOverride ?? Cursor.lockState == CursorLockMode.Locked);
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
                 _rover.DriveInput.y, _rover.NormalizedSpeed, descent, _rover.IsGrounded, mayRecenter);
         }
@@ -681,9 +640,8 @@ namespace MoonProject.Rover
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
-                    float baseYaw = IsNudgeMoment ? roverYaw + _orbitState.YawOffset : roverYaw;
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
-                    yaw = Mathf.DeltaAngle(baseYaw, CameraMoment.BlendYaw(moment, baseYaw, subjectYaw, reach));
+                    yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
                     _momentYaw -= turned * moment.YawShare * Mathf.Clamp01(reach);
                 }
 
@@ -744,11 +702,6 @@ namespace MoonProject.Rover
             if (open)
             {
                 SetHeadHidden(false);
-                if (_wide != null && _wide.IsOpen)
-                {
-                    HandBackWideShot();
-                }
-
                 _moment.Clear();
                 _gazePan.End();
                 SolveFaceInspectShot();
@@ -951,13 +904,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _buildFraming.LookShift;
-            float cut = _beam.Framing.Weight;
-            if (cut > 0f)
-            {
-                point = Vector3.Lerp(point, BeamMiddle(), cut);
-            }
-
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift;
             float inspectFade = Mathf.Min(1f - _faceInspectWeight, _openingDampingFade);
             float freeTargetShare = Mathf.Max(0f, _tuning.FreeLookDampingShare - _tuning.FreeLookBodyDampingShare)
                 * _freeLook * inspectFade;
@@ -985,7 +932,7 @@ namespace MoonProject.Rover
             }
 
             int targetCount = _focus != null ? _focus.CopyFocus(_focusPoints) : 0;
-            bool mayFrame = _wide.Weight <= 0f && _held.Weight <= 0f && !_buildFraming.IsActive && _buildFraming.Weight <= 0f
+            bool mayFrame = _held.Weight <= 0f && !_buildFraming.IsActive
                 && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_crawling;
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             _framing.Step(new TargetFramingInput(_rover.Position, RoverYaw(), _focusPoints, targetCount,
@@ -1000,27 +947,16 @@ namespace MoonProject.Rover
             return _look.OrbitDegrees(mouse, _input.LookRate, deltaTime);
         }
 
-        private bool IsNudgeMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.NudgeMoment);
-
         /// <summary>
         /// The chase orbit before any shot or framing moves it: the player's view and 07's moments, then the beam
         /// work's framing; <paramref name="yaw"/> is from 07's heading.
         /// </summary>
         private void ChaseOrbit(out float yaw, out float elevation, out float radius)
         {
-            yaw = IsNudgeMoment ? _orbitState.YawOffset : _orbitState.YawOffset * (1f - _moment.Weight);
+            yaw = _orbitState.YawOffset * (1f - _moment.Weight);
             elevation = _orbitState.Elevation + _momentLift + _wallCompression * _tuning.WallMaxPitchLift
-                - _crawl * _tuning.CrawlLower + _buildFraming.ElevationOffset;
-            if (IsNudgeMoment && elevation > _tuning.DefaultPitch)
-            {
-                elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
-            }
-            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack) * (1f + _buildFraming.PullBack);
-            float cutFrame = _beam.Framing.Weight;
-            if (cutFrame > 0f)
-            {
-                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
-            }
+                - _crawl * _tuning.CrawlLower;
+            radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
         }
 
         /// <summary>07 hooked a load: its renderers are the obstacle the chase camera keeps clear of.</summary>
@@ -1046,31 +982,6 @@ namespace MoonProject.Rover
             ChaseOrbit(out float yaw, out float elevation, out float radius);
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
-            if (_buildFraming.Weight > 0f)
-            {
-                screen.y = Mathf.Lerp(screen.y, _tuning.BuildFrameScreenY, _buildFraming.Weight);
-            }
-            float wide = _wide.Weight;
-            if (wide > 0f)
-            {
-                WideShotSettings settings = _tuning.WideShot;
-                WideShotFrame frame = _wide.Frame;
-                float time = _wide.BreathSeconds;
-                if (_wideSteersYaw)
-                {
-                    float sway = WideShotComposer.Breath(settings.BreathYaw, settings.BreathYawPeriod, time);
-                    float wideYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, frame.Yaw + sway);
-                    yaw += Mathf.DeltaAngle(yaw, wideYaw) * wide;
-                }
-
-                float rise = WideShotComposer.Breath(settings.BreathElevation, settings.BreathElevationPeriod, time);
-                float drift = WideShotComposer.Breath(settings.BreathDistance, settings.BreathDistancePeriod, time);
-                elevation = Mathf.Lerp(elevation, frame.Elevation + rise, wide);
-                radius = Mathf.Lerp(radius, frame.Distance * (1f + drift), wide);
-                fov = Mathf.Lerp(fov, _tuning.BaseFov + settings.FovWiden, wide);
-                screen.y = Mathf.Lerp(screen.y, frame.ScreenY, wide);
-            }
-
             float framed = _held.Weight;
             if (framed > 0f)
             {
@@ -1140,29 +1051,6 @@ namespace MoonProject.Rover
                 : _faceInspectShot.Focus + (_faceInspectShot.Eye - _faceInspectShot.Focus) * _pageShare;
             _bump.FaceInspectRotation = _faceInspectShot.Rotation;
             _bump.FaceInspectUp = _faceInspectShot.ScreenUp;
-        }
-
-        /// <summary>
-        /// Counts 07's rest toward the wide shot (a moment, a leap or the tether keep it closed; the pause menu only
-        /// delays it) and opens or hands it back when it says so. A charge asks for it once, after its charging delay.
-        /// </summary>
-        private void StepWideShot(float deltaTime)
-        {
-            bool busy = _moment.IsActive || _tethered || _hopListOpen || _stargaze.LookUp > 0f
-                || _opening.IsActive || _held.IsOpen || _faceInspectOpen || _faceInspectWeight > 0f
-                || _buildFraming.IsActive || _buildFraming.Weight > 0f;
-            _chargingSeconds = _charging ? _chargingSeconds + deltaTime : 0f;
-            bool asked = _chargeAsks && _chargingSeconds >= _tuning.WideShot.ChargingDelay;
-            switch (_wide.Step(_stillness.StillSeconds, busy, _paused, asked, deltaTime))
-            {
-                case WideShotCue.Open:
-                    _chargeAsks = false;
-                    OpenWideShot();
-                    break;
-                case WideShotCue.HandBack:
-                    HandBackWideShot();
-                    break;
-            }
         }
 
         /// <summary>
@@ -1251,54 +1139,20 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Looking up with 07 at rest: 07 joins the gaze, and after a rest the stargazing beat begins (published so UI
-        /// and audio can quiet down); drive input or the view dropping ends it.
+        /// Looking up with 07 at rest on a night it has not gazed on yet: 07 joins the gaze, and after a long rest the
+        /// stargazing beat begins (published so UI and audio can quiet down); any drive or look input, or the view
+        /// dropping, ends it at once.
         /// </summary>
-        private void StepStargaze(float deltaTime)
+        private void StepStargaze(bool looking, float deltaTime)
         {
             bool moving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon
                 || _rover.Speed > _tuning.StargazeMaxSpeed;
-            bool free = !_moment.IsActive && _wide.Weight <= 0f && !_tethered
+            bool free = !_moment.IsActive && !_tethered
                 && !_opening.IsActive && _held.Weight <= 0f && !_faceInspectOpen && _faceInspectWeight <= 0f;
-            if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, free, deltaTime))
+            if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, looking, free, deltaTime))
             {
                 _events.Publish(new StargazingChanged(_stargaze.IsActive));
             }
-        }
-
-        /// <summary>
-        /// Composes the wide frame from where the camera looks now, turned gently toward Earth or The Peak (or, shut in
-        /// by a canyon, closer and looking along the way) and fitted to the terrain. 07 is resting, so the frame is
-        /// solved once and holds.
-        /// </summary>
-        private void OpenWideShot()
-        {
-            WideShotSettings settings = _tuning.WideShot;
-            Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            float viewYaw = WideShotComposer.Bearing(_viewCamera.transform.forward);
-            float earthYaw = WideShotComposer.Bearing(_world.EarthDirection);
-            float peakYaw = WideShotComposer.Bearing(_world.PeakPosition - follow);
-            float swing = WideShotComposer.SubjectSwing(settings, viewYaw, earthYaw, peakYaw);
-            float shutIn = WideShotComposer.ShutIn(settings, _terrain, follow);
-            _wide.Open(WideShotComposer.Solve(settings, _terrain, follow, viewYaw, swing, shutIn));
-            _wideSteersYaw = true;
-            _events.Publish(new RoverWideShotChanged(true));
-        }
-
-        /// <summary>
-        /// Eases back to the chase camera. The view keeps the bearing the wide shot turned to (the orbit adopts it),
-        /// so only distance, height and lens come back: the quickest return that never swings the world round.
-        /// </summary>
-        private void HandBackWideShot()
-        {
-            if (_wideSteersYaw)
-            {
-                AdoptViewBearing();
-                _wideSteersYaw = false;
-            }
-
-            _wide.HandBack();
-            _events.Publish(new RoverWideShotChanged(false));
         }
 
         /// <summary>
@@ -1344,6 +1198,15 @@ namespace MoonProject.Rover
         /// lit lamps beyond it, holds, then eases back to the chase frame.
         /// </summary>
         /// <summary>The dock let go: the view turns with 07 while it eases round on the pad.</summary>
+        /// <summary>Each night 07 may gaze once: the earthlit phase arms the stargazing beat.</summary>
+        private void OnSkyPhaseChanged(SkyPhaseChanged sky)
+        {
+            if (sky.Phase == SkyPhase.Earthlit)
+            {
+                _stargaze.Arm();
+            }
+        }
+
         private void OnDockChanged(RoverDockChanged dock)
         {
             if (dock.Docked)
@@ -1381,13 +1244,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void OpenHeldShot(WideShotSettings settings, Vector3 follow, float yaw, float holdSeconds)
         {
-            if (_wide.IsOpen)
-            {
-                HandBackWideShot();
-            }
-
             bool wasOpen = _held.IsOpen;
-            _chargeAsks = false;
             _held.Open(settings, ClearHeldFrame(settings, follow, yaw), holdSeconds);
             _evening = false;
             if (!wasOpen)
@@ -1479,11 +1336,6 @@ namespace MoonProject.Rover
             _tethered = false;
         }
 
-        private void OnHopListChanged(RadioHopListChanged list)
-        {
-            _hopListOpen = list.Open;
-        }
-
         /// <summary>
         /// 07 jumped somewhere else while the view was dark: the wide shot and any moment end at once and the camera
         /// snaps behind 07, so nothing lerps across from the old spot.
@@ -1493,29 +1345,15 @@ namespace MoonProject.Rover
         /// a loaded crawl starts framed.
         /// </summary>
         /// <summary>
-        /// A charge starting asks for the wide shot after its delay, unless a held shot (the dock's evening) already
-        /// has the view.
+        /// Whether 07 is charging, which lengthens the dock's evening while the fill runs.
         /// </summary>
         private void OnChargingChanged(ChargingChanged charging)
         {
             _charging = charging.Charging;
-            bool pad = charging.Charger == ChargerKind.Pad;
-            _chargeAsks = _charging && !_held.IsOpen && !pad;
-            if (pad && _charging && !_moment.IsActive && !_held.IsOpen && !_opening.IsActive)
-            {
-                Vector3 side = Quaternion.Euler(0f, RoverYaw() + DockSideDegrees, 0f) * Vector3.forward;
-                _moment.Start(_tuning.DockMoment, _rover.Position + side * _tuning.DockSideMetres, true);
-            }
-            else if (!_charging && IsDockMoment)
-            {
-                _moment.Release();
-            }
         }
 
         /// <summary>The camera moment running now is the closer frame while 07 charges on its pad.</summary>
         private bool IsLampFitMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.LampFitMoment);
-
-        private bool IsDockMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.DockMoment);
 
         private void OnLowPowerChanged(LowPowerChanged lowPower)
         {
@@ -1528,11 +1366,9 @@ namespace MoonProject.Rover
 
         private void OnPlaced(RoverPlaced placed)
         {
-            bool wasWide = _wide.IsOpen || _held.IsOpen;
-            _wide.Close();
+            bool wasWide = _held.IsOpen;
             _held.Reset();
             _evening = false;
-            _wideSteersYaw = false;
             _moment.Clear();
             _gazePan.End();
             _faceInspectOpen = false;
@@ -1548,7 +1384,6 @@ namespace MoonProject.Rover
             _momentLift = 0f;
             _momentPullBack = 0f;
             _momentShift = Vector3.zero;
-            _beam.Framing.Reset();
             _buildFraming.Reset();
             SetHeadHidden(false);
             Snap();
@@ -1558,27 +1393,29 @@ namespace MoonProject.Rover
             }
         }
 
-        private void OnPauseChanged(PauseChanged pause)
-        {
-            _paused = pause.Paused;
-        }
-
         private void StepBuildFraming(Vector2 look, bool recenter, bool externalYaw, float deltaTime)
         {
             float bearing = _orbitState.Bearing;
             float before = bearing;
+            bool driving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
             _buildFraming.Step(
                 _rover.Position,
                 look,
                 recenter,
+                driving,
                 externalYaw,
                 ref bearing,
-                _orbitState.Elevation,
                 _tuning,
                 deltaTime);
             if (Mathf.Abs(Mathf.DeltaAngle(before, bearing)) > LookEpsilon)
             {
                 _orbitState.AdoptBearing(bearing);
+            }
+
+            if (_buildFraming.IsActive && !BuildFraming.IsOffScreen(
+                    _viewCamera.WorldToViewportPoint(_buildFraming.GhostPosition), _tuning.BuildFrameScreenMargin))
+            {
+                _buildFraming.End();
             }
 
             _buildFraming.RecordOrbitBearing(_orbitState.Bearing);
@@ -1588,11 +1425,6 @@ namespace MoonProject.Rover
         {
             if (placing.Placing)
             {
-                if (_wide.IsOpen)
-                {
-                    HandBackWideShot();
-                }
-
                 // Placing is the player taking the wheel: a held shot (the dock's evening) would keep the view where it
                 // stands, and the build framing never brings the ghost into it.
                 if (_held.IsOpen)
@@ -1606,49 +1438,21 @@ namespace MoonProject.Rover
                     _gazePan.End();
                 }
 
-                if (!_buildFraming.IsActive)
+                // One gentle turn, and only when the ghost starts off screen: a ghost already in view needs none.
+                if (!_buildFraming.IsActive
+                    && BuildFraming.IsOffScreen(_viewCamera.WorldToViewportPoint(placing.GhostPosition),
+                        _tuning.BuildFrameScreenMargin))
                 {
-                    _buildFraming.Begin(_rover.Position, placing.GhostPosition, placing.SnappedToApron, _orbitState.Bearing);
+                    _buildFraming.Begin(placing.GhostPosition, _orbitState.Bearing);
                 }
                 else
                 {
-                    _buildFraming.MoveGhost(_rover.Position, placing.GhostPosition, placing.SnappedToApron);
+                    _buildFraming.MoveGhost(placing.GhostPosition);
                 }
             }
             else
             {
                 _buildFraming.End();
-            }
-        }
-
-        /// <summary>A card to read holds the wide shot back; holding an upgrade's confirm is an interaction.</summary>
-        private void OnUiCue(UiCue cue)
-        {
-            if (cue.Kind == UiCueKind.CardShown)
-            {
-                _wide.HoldBack(_tuning.WideShot.CardQuietSeconds);
-            }
-            else if (cue.Kind == UiCueKind.HoldFill)
-            {
-                Interact();
-            }
-        }
-
-        private void OnBellCued(BellCued cue)
-        {
-            if (cue.Cue == BellCue.DialTurned)
-            {
-                Interact();
-            }
-        }
-
-        /// <summary>The player did something at a station or at Bell: hand back and stay close for a while.</summary>
-        private void Interact()
-        {
-            _wide.HoldBack(_tuning.WideShot.InteractionQuietSeconds);
-            if (_wide.IsOpen)
-            {
-                HandBackWideShot();
             }
         }
 
@@ -1699,13 +1503,6 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Story showed the next line and its action has a place (G5): if that place is off screen, the camera is nudged
-        /// once toward it, one eased turn with 07 in the foreground, ended by any look or drive input. Only for a line
-        /// that follows a success (not a reminder), never twice for the same target, and nothing happens while another
-        /// shot has the camera (the wake included, so a loaded game's first line never nudges). 07's own head look
-        /// toward the object is Story's chip.
-        /// </summary>
-        /// <summary>
         /// The headlamp fitted live at the rack: the camera swings round to a calm front three-quarter frame of 07's
         /// head (the look direction placed behind 07, so the camera sits in front of it) while the pods clamp and the
         /// lenses warm, and eases back. Never on load: a loaded rack fills without a <see cref="PartFitted"/>. Another
@@ -1728,62 +1525,6 @@ namespace MoonProject.Rover
             _moment.Start(_tuning.LampFitMoment, _rover.Position + behind * _tuning.LampFitSubjectMetres, false);
         }
 
-        private void OnNextStepChanged(NextStepChanged step)
-        {
-            _pendingNudge.Clear();
-            if (!step.HasTarget || step.Reason != NextLineReason.Next)
-            {
-                return;
-            }
-
-            if (!FreeForNudge)
-            {
-                _pendingNudge.Hold(step, Time.time);
-                return;
-            }
-
-            TryNudge(step);
-        }
-
-        // The dock's close frame is an ambient hold that lasts as long as 07 sits on the pad, not a shot to wait out: a
-        // line read on the pad (the charge has just ended) nudges over it, and the dock frame returns afterwards.
-        private bool FreeForNudge => (!_moment.IsActive || IsDockMoment) && _wide.Weight <= 0f &&
-                                     _held.Weight <= 0f && !_tethered && !_towing && !_opening.IsActive &&
-                                     !_faceInspectOpen && _faceInspectWeight <= 0f && !_gazePan.IsActive &&
-                                     !_buildFraming.IsActive && _buildFraming.Weight <= 0f && _turnSettle.IsSettled;
-
-        /// <summary>
-        /// A line that came while another shot had the camera (the charge's close shot, the dock) nudges as soon as
-        /// that shot lets go, instead of never.
-        /// </summary>
-        private void StepPendingNudge()
-        {
-            if (_pendingNudge.TryRelease(FreeForNudge, Time.time, _tuning.NudgePendingSeconds,
-                    out NextStepChanged step))
-            {
-                TryNudge(step);
-            }
-        }
-
-        private void TryNudge(NextStepChanged step)
-        {
-            // Where the camera actually looks: the dock's close frame swings it round 07, so 07's heading and the
-            // orbit offset alone would call a target the frame has turned away from "near ahead".
-            float looking = _viewCamera.transform.eulerAngles.y;
-            Vector3 viewport = _viewCamera.WorldToViewportPoint(step.TargetPosition);
-            if (!GuidanceNudge.ShouldNudge(_rover.Position, step.TargetPosition, looking, viewport,
-                    _tuning.NudgeScreenMargin, _tuning.NudgeMinDistance, _tuning.NudgeSlack, _tuning.NudgeMaxBearing) ||
-                !_nudge.TryTake(step.TargetId))
-            {
-                return;
-            }
-
-            _gazePan.Begin(_rover.Position, looking, step.TargetPosition, _tuning.NudgeTravelSeconds,
-                _tuning.NudgeHoldSeconds, _tuning.NudgeSweep, 0f, _tuning.ReleasePanHalfLife,
-                _tuning.NudgeSlack);
-            _moment.Start(_tuning.NudgeMoment, _gazePan.Subject, true);
-            _driveCarriedIntoNudge = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-        }
 
         /// <summary>Moves the held release moment's subject along the pan, and lets it go once the pan has run its course.</summary>
         private void StepReleasePan(float deltaTime)
@@ -1824,23 +1565,13 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>The charge-up's stages: <see cref="BeamFraming"/> decides whether the cut pushes in.</summary>
-        private void OnChargeStaged(CutChargeStaged staged)
-        {
-            _beam.OnStaged(staged, _rover.Position, _rover.Rotation * Vector3.forward, _look.GentleCamera);
-        }
-
-        /// <summary>The tower coming online, and the beam's beats for <see cref="BeamFraming"/> (the cut's push-in
-        /// and the dig's shoulder framing; look or drive input hands either back at once).</summary>
+        /// <summary>The tower coming online (a build beat).</summary>
         private void OnFeelBeat(FeelBeat beat)
         {
             if (beat.Kind == FeelKind.Build)
             {
                 OnTowerBuilt(beat);
-                return;
             }
-
-            _beam.OnBeat(beat, _rover.Position, _rover.Rotation * Vector3.forward, _look.GentleCamera);
         }
 
         /// <summary>The camera moment running now is the radio tower coming online.</summary>
@@ -1863,60 +1594,6 @@ namespace MoonProject.Rover
             {
                 _moment.Release();
             }
-        }
-
-        /// <summary>The middle of the beam, between 07's emitter (its follow point) and the cut point.</summary>
-        private Vector3 BeamMiddle()
-        {
-            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            return Vector3.Lerp(emitter, _beam.Framing.CutPoint, 0.5f);
-        }
-
-        /// <summary>
-        /// The orbit toward the over-the-shoulder eye, looking at the beam's middle (where the target goes): the
-        /// emitter, the beam and the cut point all in view, never rolled.
-        /// </summary>
-        private void BlendCutFraming(float weight, ref float yaw, ref float elevation, ref float radius)
-        {
-            if (_beam.IsDig)
-            {
-                BlendDigFraming(weight, ref yaw, ref elevation, ref radius);
-                return;
-            }
-
-            CutFraming.PushIn(weight, _tuning.CutFramePushIn, _tuning.CutFrameLower, ref elevation, ref radius);
-            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 line = BeamMiddle() - _beam.Framing.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide, 0f);
-            line.y = 0f;
-            if (line.magnitude < MinSubjectDistance)
-            {
-                return;
-            }
-
-            float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
-            yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
-        }
-
-        /// <summary>The dig's framing: the orbit toward the shoulder eye, a little higher, looking at the beam's middle.
-        /// </summary>
-        private void BlendDigFraming(float weight, ref float yaw, ref float elevation, ref float radius)
-        {
-            float share = _look.GentleCamera ? _tuning.DigFrameGentleShare : 1f;
-            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 eye = _beam.Framing.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
-                _tuning.DigFrameRise * share);
-            Vector3 line = BeamMiddle() - eye;
-            float distance = line.magnitude;
-            if (distance < MinSubjectDistance)
-            {
-                return;
-            }
-
-            float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
-            yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
-            elevation = Mathf.Lerp(elevation, Mathf.Asin(Mathf.Clamp(-line.y / distance, -1f, 1f)) * Mathf.Rad2Deg,
-                weight);
-            radius = Mathf.Lerp(radius, distance, weight);
         }
 
         /// <summary>A soft dip on landing; the Gentle camera stays level.</summary>
