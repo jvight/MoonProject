@@ -2656,6 +2656,118 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// The solar cells up close in Day C, as 07 sees the fallen array: from about 4 m and 9 m, looking down across the wings, with the
+        /// low sun facing the camera, behind it and from the side (<c>Logs/captures/panel_&lt;variant&gt;_*.png</c>).
+        /// <c>--arg variant=nodust|nowear|matte|cells</c> renders the cells with that one setting changed, to find what greys
+        /// them: <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CapturePanelLook</c>
+        /// </summary>
+        public static void CapturePanelLook()
+        {
+            BatchRunner.Run(nameof(CapturePanelLook), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures");
+                Directory.CreateDirectory(capturesDir);
+                string variant = args.GetString("variant", "base");
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    foreach ((string sunName, Vector3 sunFacing) in new[]
+                    {
+                        ("sunfront", new Vector3(0.55f, 0f, 0.80f)), ("sunback", new Vector3(-0.55f, 0f, -0.80f)),
+                        ("sunside", new Vector3(1f, 0f, 0f)),
+                    })
+                    {
+                        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                        var temp = new ArtLightingPreview.TemporaryObjects();
+                        try
+                        {
+                            Color bg = SetupEnvironment(temp, false);
+                            GameObject array = SpawnProp(ArtPaths.R1ModelsFolder + "/Ruins/FallenSolarArray.prefab",
+                                Vector3.zero, 0f, temp);
+                            ApplyCellVariant(array, variant, temp);
+                            AimDayCSunAtSurface(sunFacing);
+                            // Looking down across the wings (they run along X), as 07's chase cam sees them
+                            var target = new Vector3(0f, 0.3f, 0f);
+                            RenderShot(target + new Vector3(0.6f, 2.6f, 3.2f), target, 50f, bg,
+                                Path.Combine(capturesDir, $"panel_{variant}_{sunName}_3m.png"));
+                            RenderShot(target + new Vector3(1.2f, 4.0f, 8.5f), target, 50f, bg,
+                                Path.Combine(capturesDir, $"panel_{variant}_{sunName}_9m.png"));
+                        }
+                        finally
+                        {
+                            temp.Dispose();
+                        }
+                    }
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        // Swaps the solar cell slot on every renderer for a copy with one setting changed (base leaves it alone).
+        private static void ApplyCellVariant(GameObject root, string variant, ArtLightingPreview.TemporaryObjects temp)
+        {
+            if (variant == "base")
+            {
+                return;
+            }
+
+            Material cells = null;
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] == null || materials[i].name != R1MaterialRecipes.SolarCellSlot)
+                    {
+                        continue;
+                    }
+
+                    if (cells == null)
+                    {
+                        cells = new Material(materials[i]);
+                        temp.Add(cells);
+                        switch (variant)
+                        {
+                            case "nodust":
+                                cells.SetFloat("_DustAmount", 0f);
+                                break;
+                            case "nowear":
+                                cells.SetFloat("_EdgeWearAmount", 0f);
+                                break;
+                            case "cells":
+                                cells.SetFloat("_SmoothnessMin", 0.30f);
+                                cells.SetFloat("_SmoothnessMax", 0.48f);
+                                cells.SetFloat("_EdgeWearAmount", 0.15f);
+                                cells.SetFloat("_EdgeWearSmoothness", 0.40f);
+                                break;
+                            case "matte":
+                                cells.SetFloat("_SmoothnessMax", 0.6f);
+                                cells.SetFloat("_EdgeWearSmoothness", 0.4f);
+                                break;
+                            default:
+                                throw new InvalidOperationException($"R1StoryPropsCapture: unknown panel variant '{variant}'.");
+                        }
+                    }
+
+                    materials[i] = cells;
+                }
+
+                renderer.sharedMaterials = materials;
+            }
+        }
+
+        /// <summary>
         /// Dedicated fast batch entry point for capturing the standalone towable <c>PowerModule</c>
         /// alone and beside Rover 07 for scale in Day C and Dusk lighting:
         /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CapturePowerModule</c>
