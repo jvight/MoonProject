@@ -56,10 +56,10 @@ Material:
     - _DustSharpness: 2
     - _DustSmoothness: 0.12
     - _DustUpThreshold: 0.12
-    - _EdgeWearAmount: 0.38
+    - _EdgeWearAmount: 0.15
     - _EdgeWearMetallic: 0.85
     - _EdgeWearSharpness: 4
-    - _EdgeWearSmoothness: 0.82
+    - _EdgeWearSmoothness: 0.4
     - _EdgeWearThreshold: 0.52
     - _EmissionStrength: 0
     - _HotCorePeak: 1.65
@@ -68,8 +68,8 @@ Material:
     - _NearKeep: 1
     - _OcclusionStrength: 1
     - _ScanProgress: 0
-    - _SmoothnessMax: 0.94
-    - _SmoothnessMin: 0.55
+    - _SmoothnessMax: 0.48
+    - _SmoothnessMin: 0.3
     - _SmoothnessScale: 1
     - _SteepRockDarkening: 0
     - _TriplanarMapping: 0
