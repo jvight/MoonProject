@@ -57,8 +57,8 @@ namespace MoonProject.Art.PlayModeTests
             Place(camera, eye, look, move.fov);
         }
 
-        /// <summary>Every pose, the move's ends, the marks and the sun at both clock times, absolute.</summary>
-        public string ResolvedPosesJson(SkyCycleSystem sky, Func<float, float, float> ground)
+        /// <summary>Every pose, the move's ends, the marks, the sun at both clock times and Earth, absolute.</summary>
+        public string ResolvedPosesJson(SkyCycleSystem sky, Vector3 earthDirection, Func<float, float, float> ground)
         {
             var json = new StringBuilder();
             json.AppendLine("{");
@@ -68,6 +68,7 @@ namespace MoonProject.Art.PlayModeTests
             json.AppendLine($"  \"image\": [{width}, {height}],");
             AppendSun(json, "day", sky, dayClock);
             AppendSun(json, "night", sky, nightClock);
+            json.AppendLine($"  \"earthDirection\": {Point(earthDirection.normalized)},");
             json.AppendLine($"  \"rover07\": {Point(rover.Position(ground))}, \"rover07Yaw\": {F(rover.yaw)},");
             json.AppendLine($"  \"solarArray\": {Point(array.Position(ground))}, \"solarArrayYaw\": {F(array.yaw)},");
             json.AppendLine("  \"poses\": [");
