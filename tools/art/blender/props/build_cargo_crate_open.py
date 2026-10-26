@@ -919,7 +919,9 @@ def build_cargo_crate_open() -> bpy.types.Object:
         height=0.095,
     )
 
-    # 6. Apply triplanar UVs first, then exact [0, 1] planar UVs on the three LabelPlate plaques
+    # 6. Push apart flush same-facing faces (they z-fight), then triplanar UVs and exact [0, 1] planar UVs on the
+    #    three LabelPlate plaques
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root_obj))
     r1kit.apply_triplanar_uvs(root_obj, texel_scale=0.85)
     _project_label_plate_uvs(plates)
 

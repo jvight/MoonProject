@@ -3465,6 +3465,109 @@ def prune_unused_materials(mesh_objects: Iterable[bpy.types.Object]) -> None:
         mesh.polygons.foreach_set("material_index", remapped_indices)
 
 
+COPLANAR_PLANE_EPS = 0.0006
+COPLANAR_OFFSET = 0.0015
+
+
+def _coplanar_overlap_2d(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
+    """Separating-axis test for two convex polygons (triangles here) in a plane; touching edges do not overlap."""
+    for poly in (a, b):
+        count = len(poly)
+        for i in range(count):
+            x1, y1 = poly[i]
+            x2, y2 = poly[(i + 1) % count]
+            ax, ay = y1 - y2, x2 - x1
+            pa = [ax * x + ay * y for x, y in a]
+            pb = [ax * x + ay * y for x, y in b]
+            if max(pa) <= min(pb) + 1e-6 or max(pb) <= min(pa) + 1e-6:
+                return False
+    return True
+
+
+def separate_coplanar_faces(objects: Sequence[bpy.types.Object], offset: float = COPLANAR_OFFSET,
+                            max_passes: int = 4) -> int:
+    """Run `_separate_coplanar_pass` until no face moves (a pushed face can land in a third face's plane) or
+    `max_passes` is reached; returns the total number of faces moved."""
+    total = 0
+    for _ in range(max_passes):
+        moved = _separate_coplanar_pass(objects, offset)
+        total += moved
+        if moved == 0:
+            break
+    return total
+
+
+def _separate_coplanar_pass(objects: Sequence[bpy.types.Object], offset: float) -> int:
+    """Push apart faces that face the same way in the same plane and overlap (they z-fight in the depth buffer):
+    within each such pair, the smaller face moves `offset` metres out along its normal, so a flush trim, plate or
+    end cap stands a hair proud of the surface it shares. Works in world space across `objects` and returns the
+    number of faces moved. Call after the meshes are built and placed, before baking vertex colours."""
+    meshes = [o for o in objects if o.type == "MESH" and o.data is not None]
+    entries = []
+    bms = {}
+    for obj in meshes:
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.normal_update()
+        bms[obj.name] = (obj, bm)
+        world = obj.matrix_world
+        normal_matrix = world.to_3x3().inverted_safe().transposed()
+        # Faces can be concave n-gons; compare them by their triangles so the convex overlap test stays exact
+        tris_by_face: dict[int, list] = {}
+        for loops in bm.calc_loop_triangles():
+            tris_by_face.setdefault(loops[0].face.index, []).append([world @ l.vert.co for l in loops])
+        for face in bm.faces:
+            area = face.calc_area()
+            if area < 1e-6:
+                continue
+            n = (normal_matrix @ face.normal).normalized()
+            pts = [world @ v.co for v in face.verts]
+            entries.append((obj.name, face.index, n, pts, area, tris_by_face.get(face.index, [])))
+
+    # Bucket by the normal's dominant axis and sign only, then walk each bucket sorted by plane distance: no
+    # quantisation boundary can split a coplanar pair
+    buckets: dict[tuple[int, bool], list] = {}
+    for entry in entries:
+        n = entry[2]
+        axis = max(range(3), key=lambda k: abs(n[k]))
+        buckets.setdefault((axis, n[axis] > 0.0), []).append((n.dot(entry[3][0]), entry))
+
+    to_move: dict[tuple[str, int], Vector] = {}
+    for group in buckets.values():
+        group.sort(key=lambda item: item[0])
+        for i in range(len(group)):
+            j = i + 1
+            while j < len(group) and group[j][0] - group[i][0] <= COPLANAR_PLANE_EPS:
+                a, b = group[i][1], group[j][1]
+                j += 1
+                if (a[2] - b[2]).length > 0.02 or abs(a[2].dot(a[3][0]) - a[2].dot(b[3][0])) > COPLANAR_PLANE_EPS:
+                    continue
+                n = a[2]
+                axis = Vector((1.0, 0.0, 0.0)) if abs(n.x) < 0.9 else Vector((0.0, 1.0, 0.0))
+                u = n.cross(axis).normalized()
+                v = n.cross(u)
+                if not any(
+                    _coplanar_overlap_2d([(p.dot(u), p.dot(v)) for p in ta], [(p.dot(u), p.dot(v)) for p in tb])
+                    for ta in a[5] for tb in b[5]
+                ):
+                    continue
+                small = a if a[4] <= b[4] else b
+                to_move[(small[0], small[1])] = small[2]
+
+    for (name, index), world_normal in to_move.items():
+        obj, bm = bms[name]
+        bm.faces.ensure_lookup_table()
+        local_offset = obj.matrix_world.inverted_safe().to_3x3() @ (world_normal * offset)
+        for vert in bm.faces[index].verts:
+            vert.co += local_offset
+
+    for obj, bm in bms.values():
+        bm.to_mesh(obj.data)
+        obj.data.update()
+        bm.free()
+    return len(to_move)
+
+
 def collect_hierarchy(root: bpy.types.Object) -> list[bpy.types.Object]:
     """Collect root and all descendants in deterministic depth-first sorted order."""
     result = [root]
