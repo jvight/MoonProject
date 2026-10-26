@@ -751,6 +751,10 @@
             "text": "Tow it to the build site: it's the battery bank's frame"
         },
         {
+            "key": "next.v3.unhook_module",
+            "text": "Let the cable go here"
+        },
+        {
             "key": "next.v3.free_cable",
             "text": "Back up to free the cable"
         },

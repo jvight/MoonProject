@@ -781,6 +781,7 @@ namespace MoonProject.Gameplay.Tests
             public bool NightFallen { get; set; }
             public bool ModuleHooked { get; set; }
             public bool ModuleSnagged { get; set; }
+            public bool ModuleAtHome { get; set; }
             public bool ModuleHome { get; set; }
             public bool AnswerDone { get; set; }
             public bool AnswerStarted { get; set; }

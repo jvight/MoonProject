@@ -183,12 +183,14 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// On the cable: the tow-home line, or, while the module is caught past the winch's slack, the line to back up
-        /// and free it. Once freed the tow says nothing more: the way home is already known, and a line never repeats.
+        /// and free it; home, the line to let the cable go. Once freed the tow says nothing more until home: the way
+        /// home is already known, and a line never repeats.
         /// </summary>
         private string TowLine()
         {
             _snaggedThisTow |= _game.ModuleSnagged;
             return _game.ModuleSnagged ? OpeningKeys.FreeCable
+                : _game.ModuleAtHome ? OpeningKeys.UnhookModule
                 : _snaggedThisTow ? string.Empty
                 : OpeningKeys.TowModuleHome;
         }

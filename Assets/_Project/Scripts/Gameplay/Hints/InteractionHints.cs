@@ -88,8 +88,10 @@ namespace MoonProject.Gameplay
         public int CopyFocus(Vector3[] points)
         {
             InteractionHint hint = Primary;
+            // A hitch seen from afar is a label, not where 07 works: the view keeps to the drive until it is in reach.
             if (hint.Kind == InteractionKind.None || hint.Kind == InteractionKind.OpenBuild ||
-                hint.Kind == InteractionKind.FitPart || points.Length == 0)
+                hint.Kind == InteractionKind.FitPart || (hint.Kind == InteractionKind.Tether && !hint.Ready) ||
+                points.Length == 0)
             {
                 return 0;
             }
@@ -172,9 +174,13 @@ namespace MoonProject.Gameplay
                     hint = atRover ? new InteractionHint(kind, rover, true) : InteractionHint.None;
                     return atRover;
                 case InteractionKind.Tether:
-                    bool hookable = _tow.TryGetHookable(out Vector3 hitch);
-                    hint = hookable ? FirstUse(kind, hitch) : InteractionHint.None;
-                    return hookable;
+                    // Out of hook reach the chip only labels a hitch in view: it never stands on 07 or turns its
+                    // head, so backing up to a hitch behind 07 is left alone until the key would act.
+                    bool hitched = _tow.TryGetTetherSpot(out Vector3 hitch, out bool inReach);
+                    hint = hitched ? FirstUse(kind, hitch, 0f, inReach) : InteractionHint.None;
+                    hitched &= inReach || !hint.OnRover;
+                    hint = hitched ? hint : InteractionHint.None;
+                    return hitched;
                 case InteractionKind.Install:
                     bool atSocket = _relay.TryGetInstall(out Vector3 socket);
                     hint = atSocket ? FirstUse(kind, socket) : InteractionHint.None;
@@ -200,10 +206,12 @@ namespace MoonProject.Gameplay
         /// A key taught at <paramref name="target"/>: its chip stands there, or on 07 while it is off screen; a hold's
         /// chip carries how far the hold has come.
         /// </summary>
-        private InteractionHint FirstUse(InteractionKind kind, Vector3 target, float holdProgress = 0f)
+        /// <param name="ready">The key would act now; false shows the chip waiting (07 not near enough yet).</param>
+        private InteractionHint FirstUse(InteractionKind kind, Vector3 target, float holdProgress = 0f,
+            bool ready = true)
         {
             Vector3 chip = _firstUse.Place(target, out bool onRover);
-            return new InteractionHint(kind, chip, true, target, onRover, null, 0, 0, holdProgress);
+            return new InteractionHint(kind, chip, ready, target, onRover, null, 0, 0, holdProgress);
         }
     }
 }

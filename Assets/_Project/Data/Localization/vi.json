@@ -751,6 +751,10 @@
             "text": "Kéo mô-đun về bãi xây: nó là khung của bộ tích điện"
         },
         {
+            "key": "next.v3.unhook_module",
+            "text": "Thả cáp ở đây"
+        },
+        {
             "key": "next.v3.free_cable",
             "text": "Lùi lại để gỡ cáp"
         },

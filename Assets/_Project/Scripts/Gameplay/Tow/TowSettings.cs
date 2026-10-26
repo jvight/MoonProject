@@ -20,6 +20,11 @@ namespace MoonProject.Gameplay
         [Range(0.5f, 6f)]
         [SerializeField] private float _hookReach = 3f;
 
+        [Tooltip("Metres (flat) from 07's winch within which a load's hitch shows its tether chip: dim until it is in " +
+                 "hook reach, so the key is known before 07 gets there.")]
+        [Range(3f, 30f)]
+        [SerializeField] private float _hintReach = 12f;
+
         [Tooltip("How briskly the taut rope takes up (1/s): how fast it matches the load to 07's speed, and how much " +
                  "catch-up each metre of stretch asks for.")]
         [Range(0.5f, 12f)]
@@ -78,8 +83,8 @@ namespace MoonProject.Gameplay
         [Range(4f, 60f)]
         [SerializeField] private float _letGoDistance = 20f;
 
-        [Tooltip("Metres (flat) from the apron's centre within which a towed load has come home: the winch unhooks " +
-                 "it there. Wide enough for the load trailing 07 and its cable as 07 pulls up at the pad, inside the " +
+        [Tooltip("Metres (flat) from the apron's centre within which a towed load has come home: let go there, a " +
+                 "structure may be built on it. Wide enough for the load trailing 07 and its cable as 07 pulls up at the pad, inside the " +
                  "battery bank's reach of the pad, so a bank built on it links.")]
         [Range(1f, 20f)]
         [SerializeField] private float _homeRadius = 9f;
@@ -108,6 +113,7 @@ namespace MoonProject.Gameplay
 
         public float CableLength => _cableLength;
         public float HookReach => _hookReach;
+        public float HintReach => _hintReach;
         public float Stiffness => _stiffness;
         public float CatchUp => _catchUp;
         public float MaxPull => _maxPull;

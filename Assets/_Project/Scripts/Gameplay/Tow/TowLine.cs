@@ -8,8 +8,9 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// 07's winch cable (docs/design/opening-v3-purpose.md R6, ruling 4: a physical cable, no beam). The tether key
-    /// hooks the nearest towable load whose hitch is within reach of the winch and lets it go again; the cable also
-    /// unhooks a load that has come home to the apron, and softly lets go of one that fell far behind. While it tows,
+    /// hooks the nearest towable load whose hitch is within reach of the winch and lets it go again, at any time and as
+    /// often as the player likes, until a structure is built on the load; the cable never lets go on its own but for a
+    /// true snap, one fallen far past all its slack. A load let go within the apron's home radius has come home. While it tows,
     /// each physics step the rope (<see cref="TowCable"/>) draws the load after 07, its skids bite so it never overruns
     /// 07, and the winch lifts a caught load free (<see cref="TowSnag"/>); the battery prices the tow (its speed cap and drive cost, read from
     /// <see cref="IsTowing"/>). Publishes <see cref="TowAttached"/> and <see cref="TowReleased"/>; Rover reads it as
@@ -194,17 +195,12 @@ namespace MoonProject.Gameplay
 
             if (tetherPressed)
             {
-                Release(TowRelease.Player);
-                return;
-            }
-
-            // The load itself, not its hitch, must be home: the same test a structure built on it reads.
-            if (SurfaceRules.HorizontalDistanceSquared(_load.Root.position, _home) <=
-                _settings.HomeRadius * _settings.HomeRadius)
-            {
-                Release(TowRelease.Arrived);
+                Release(AtHome(_load) ? TowRelease.Arrived : TowRelease.Player);
             }
         }
+
+        /// <summary>The load on the cable stands within the apron's home radius: let go here, it has come home.</summary>
+        public bool LoadAtHome => _load != null && AtHome(_load);
 
         /// <summary>One physics step: the rope pulls the load on the cable; loads off it settle.</summary>
         public void FixedStep(float deltaTime)
@@ -267,21 +263,38 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// While nothing is on the cable, the hitch of the load the tether key would hook now (the nearest within hook
-        /// reach of the winch): where the world teaches the key (<see cref="InteractionKind.Tether"/>).
+        /// Where the world shows the tether key (<see cref="InteractionKind.Tether"/>): with nothing on the cable, the
+        /// hitch of the nearest load within the hint reach of the winch, <paramref name="inReach"/> once the key would
+        /// hook it; with a load on the cable, its hitch once it has come home, where the key lets it go.
         /// </summary>
-        public bool TryGetHookable(out Vector3 hitch)
+        public bool TryGetTetherSpot(out Vector3 hitch, out bool inReach)
         {
-            ITowable nearest = _load == null ? Nearest() : null;
+            if (_load != null)
+            {
+                hitch = _load.Hitch;
+                inReach = true;
+                return AtHome(_load);
+            }
+
+            ITowable nearest = Nearest(_settings.HintReach);
             hitch = nearest != null ? nearest.Hitch : Vector3.zero;
+            inReach = nearest != null && SurfaceRules.HorizontalDistanceSquared(hitch, _winch.position) <=
+                _settings.HookReach * _settings.HookReach;
             return nearest != null;
         }
 
-        /// <summary>The nearest load whose hitch lies within the hook reach of the winch, or null.</summary>
-        private ITowable Nearest()
+        private bool AtHome(ITowable load)
+        {
+            // The load itself, not its hitch, must be home: the same test a structure built on it reads.
+            return SurfaceRules.HorizontalDistanceSquared(load.Root.position, _home) <=
+                   _settings.HomeRadius * _settings.HomeRadius;
+        }
+
+        /// <summary>The nearest standing load whose hitch lies within <paramref name="reach"/> of the winch, or null.</summary>
+        private ITowable Nearest(float reach)
         {
             Vector3 winch = _winch.position;
-            float best = _settings.HookReach * _settings.HookReach;
+            float best = reach * reach;
             ITowable nearest = null;
             for (int i = 0; i < _loads.Count; i++)
             {
@@ -299,7 +312,7 @@ namespace MoonProject.Gameplay
         /// <summary>Hooks the nearest load not on the cable whose hitch lies within the hook reach of the winch.</summary>
         private void Hook()
         {
-            ITowable nearest = Nearest();
+            ITowable nearest = Nearest(_settings.HookReach);
             if (nearest == null)
             {
                 return;
