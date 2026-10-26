@@ -2067,6 +2067,8 @@ def build_asset() -> bpy.types.Object:
     for sock_name, sock_pos_u in sorted(d["power_sockets_u"].items()):
         r1kit.create_empty(sock_name, parent=root, pivot_u=sock_pos_u)
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
+
     # Bake vertex colours with doors separated so both exterior and interior faces receive clean AO
     _prepare_ao_bake_pose(root)
     r1kit.bake_vertex_colors(root, footprint_radius=d["footprint_radius"] * 1.45)
