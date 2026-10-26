@@ -193,7 +193,8 @@ namespace MoonProject.Art.PlayModeTests
             var sky = (SkyCycleSystem)context.Get<ISunlight>();
             yield return StageVista(vista, context);
             Camera view = context.Get<IViewCamera>().Camera;
-            File.WriteAllText(Path.Combine(folder, "poses.json"), vista.ResolvedPosesJson(sky, Ground));
+            Vector3 earth = context.Get<IWorldLayout>().EarthDirection;
+            File.WriteAllText(Path.Combine(folder, "poses.json"), vista.ResolvedPosesJson(sky, earth, Ground));
             var timing = new StringBuilder();
             view.enabled = false;
             try
@@ -334,7 +335,8 @@ namespace MoonProject.Art.PlayModeTests
             sky.SetClockTime(vista.dayClock);
             yield return null;
             Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder, "poses.json"), vista.ResolvedPosesJson(sky, Ground));
+            Vector3 earth = context.Get<IWorldLayout>().EarthDirection;
+            File.WriteAllText(Path.Combine(folder, "poses.json"), vista.ResolvedPosesJson(sky, earth, Ground));
             string summary = LookMaxSceneExport.Write(folder);
             Debug.Log($"[look-max] unreal export {folder}: {summary}");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
