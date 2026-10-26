@@ -210,6 +210,27 @@ void R1ApplyBuildEffect(
     }
 }
 
+// A soft band of light travelling inside a cable's rubber (Gameplay's power pulse sets the block per renderer): uv0.x
+// is metres along the lead, vertex alpha masks it to the lead. The tube's middle, where the light crosses the most
+// rubber towards the eye, glows brighter than its rim, so it reads as lit from within rather than painted on.
+half3 R1EvaluateCablePulse(float uvX, half leadMask, half3 normalWS, half3 viewDirWS)
+{
+    half peak = max(_PulseColor.r, max(_PulseColor.g, _PulseColor.b));
+    if (peak < 1e-4h || leadMask < 1e-3h)
+    {
+        return half3(0.0h, 0.0h, 0.0h);
+    }
+
+    float along = (uvX - _BaseMap_ST.z) / max(abs(_BaseMap_ST.x), 1e-4);
+    float offset = (along - _PulseAlong) / max((float)_PulseWidth, 1e-3);
+    half band = (half)exp(-offset * offset * 2.0);
+    half facing = saturate(dot(normalWS, viewDirWS));
+    half core = lerp(0.35h, 1.0h, facing * facing);
+    half3 glow = _PulseColor.rgb * (band * core * leadMask);
+    half glowMax = max(glow.r, max(glow.g, glow.b));
+    return glowMax > _BloomSafeMax ? glow * (_BloomSafeMax / glowMax) : glow;
+}
+
 half4 R1LitFrag(R1LitVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
@@ -348,6 +369,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     inputData.positionWS = input.positionWS;
     inputData.normalWS = finalNormalWS;
     inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+    emission += R1EvaluateCablePulse(uv.x, vcol.a, (half3)normalWS, (half3)inputData.viewDirectionWS);
 #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
     inputData.shadowCoord = input.shadowCoord;
 #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)

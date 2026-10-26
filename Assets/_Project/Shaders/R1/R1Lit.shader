@@ -54,6 +54,11 @@ Shader "MoonProject/R1/Lit"
         _HotCorePeak("Hot Core HDR Peak", Range(1.0, 2.5)) = 1.65
         _BuildModeGlow("Build Mode Glow", Range(0.0, 1.0)) = 0.0
 
+        [Header(Cable Pulse)]
+        _PulseAlong("Pulse Centre Along uv0.x (metres)", Float) = 0.0
+        _PulseWidth("Pulse Soft Width (metres)", Range(0.1, 3.0)) = 0.8
+        [HDR] _PulseColor("Pulse Color (black = off)", Color) = (0, 0, 0, 0)
+
         [Header(Surface Scan)]
         _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
         _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0

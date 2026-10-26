@@ -49,6 +49,9 @@ CBUFFER_START(UnityPerMaterial)
     half   _HotCoreThreshold;
     half   _HotCorePeak;
     half   _BuildModeGlow;
+    float  _PulseAlong;
+    half   _PulseWidth;
+    half4  _PulseColor;
     half   _ScanProgress;
     half   _Dissolve;
     half   _BuildPrint;
