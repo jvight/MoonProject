@@ -21,6 +21,7 @@ namespace MoonProject.Autoplay
         public const string LinesFlag = "-autoplay-lines";
         public const string NaiveFlag = "-autoplay-naive";
         public const string PointerFlag = "-autoplay-pointer";
+        public const string BankEdgeFlag = "-autoplay-bank-edge";
         public const string StrictGuidanceFlag = "-autoplay-strict-guidance";
         public const string MuteFlag = "-autoplay-mute";
 
@@ -28,7 +29,8 @@ namespace MoonProject.Autoplay
         public const float DefaultTimeoutSeconds = 900f;
 
         private AutoplayOptions(string scenario, string outDirectory, float shotSeconds, float timeoutSeconds,
-            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute, bool pointer)
+            string untilBeat, bool linesExpected, bool strictGuidance, bool naive, bool mute, bool pointer,
+            bool bankEdge)
         {
             Scenario = scenario;
             OutDirectory = outDirectory;
@@ -40,6 +42,7 @@ namespace MoonProject.Autoplay
             Naive = naive;
             Mute = mute;
             Pointer = pointer;
+            BankEdge = bankEdge;
         }
 
         /// <summary>The scenario to play; today only "opening".</summary>
@@ -66,6 +69,12 @@ namespace MoonProject.Autoplay
         /// ghost, a left click to place and weld (the pointer-only player, opening-v3 audit row 5).
         /// </summary>
         public bool Pointer { get; }
+
+        /// <summary>
+        /// The power module is set down about 0.2 m off the pad's edge before the bank is built on it: the owner's
+        /// softlock, a bank whose footprint sits inside the pad's clearance but outside its bare footprint.
+        /// </summary>
+        public bool BankEdge { get; }
 
         /// <summary>
         /// After every beat the bot stands passive and measures how long a first-time player waits for a readable
@@ -115,7 +124,7 @@ namespace MoonProject.Autoplay
             options = new AutoplayOptions(scenario, outDirectory, shotSeconds, timeout,
                 Value(args, UntilFlag) ?? string.Empty, Value(args, LinesFlag) == "1",
                 Value(args, StrictGuidanceFlag) != "0", Value(args, NaiveFlag) == "1", HasFlag(args, MuteFlag),
-                Value(args, PointerFlag) == "1");
+                Value(args, PointerFlag) == "1", Value(args, BankEdgeFlag) == "1");
             return true;
         }
 

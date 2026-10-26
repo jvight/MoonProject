@@ -52,6 +52,13 @@ class LaunchArgumentTests(unittest.TestCase):
         self.assertEqual((pairs["-screen-width"], pairs["-screen-height"]), ("1260", "540"))
         self.assertIsNone(autoplay.parse_size(None))
 
+    def test_the_bank_edge_flag_is_sent_only_when_asked_for(self):
+        plain = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
+        self.assertNotIn("-autoplay-bank-edge", plain)
+        asked = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20,
+                                          bank_edge=True)
+        self.assertEqual(dict(zip(asked[::2], asked[1::2]))["-autoplay-bank-edge"], "1")
+
     def test_guidance_is_strict_unless_made_lenient(self):
         strict = autoplay.launch_arguments("autoplay-slot", Path("out"), Path("out/player.log"), "opening", "", 600, 20)
         self.assertNotIn("-autoplay-strict-guidance", strict)

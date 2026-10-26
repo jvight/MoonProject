@@ -76,11 +76,13 @@ namespace MoonProject.Autoplay
 
         private readonly NaiveGuard _naive;
         private readonly bool _pointer;
+        private readonly bool _bankEdge;
 
         public OpeningScenario(AutoplayBot bot, string untilBeat, bool linesExpected, NaiveGuard naive = null,
-            bool pointer = false)
+            bool pointer = false, bool bankEdge = false)
         {
             _pointer = pointer;
+            _bankEdge = bankEdge;
             _naive = naive;
             _bot = bot;
             _untilBeat = untilBeat;
@@ -537,6 +539,11 @@ namespace MoonProject.Autoplay
             yield return Sub("B9a");
             yield return _base.TowTheModuleHome();
             yield return Sub("B9b");
+            if (_bankEdge)
+            {
+                yield return _base.SetTheModuleBesideThePad();
+            }
+
             yield return _base.ExpectStep(OpeningSteps.BuildBatteryBank, OpeningKeys.BuildBatteryBank,
                 "B9: the module is home");
             yield return BuildBy(StructureIds.BatteryBank, _base.ModulePosition());
