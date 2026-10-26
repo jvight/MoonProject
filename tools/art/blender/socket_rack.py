@@ -497,6 +497,7 @@ def build_socket_rack() -> bpy.types.Object:
     for i in range(3):
         _build_bay(root, i)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=RACK_DIMS["width"] * 0.55)
     pose_socket_rack_rest(root)
     bpy.context.view_layer.update()

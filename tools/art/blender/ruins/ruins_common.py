@@ -1774,6 +1774,7 @@ def finalize_ruin_and_export(
     skip_renders: bool = False,
 ) -> Tuple[Path, Path, Path]:
     """Apply triplanar UVs, override R1_Signage/R1_Screen UVs, bake ruins vertex colors, export FBX, and render."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
     apply_signage_uvs(root)
     bake_ruins_vertex_colors(root, footprint_radius=footprint_radius)

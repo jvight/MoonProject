@@ -534,6 +534,7 @@ def apply_geophone_uvs_and_colors(
     footprint_radius: float = 0.35,
 ) -> None:
     """Project UVs and bake vertex colors (R=AO, G=Wear, B=Dust) with dusty white Kapton ribbon crown."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius)

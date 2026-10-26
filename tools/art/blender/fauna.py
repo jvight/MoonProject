@@ -434,6 +434,7 @@ def _finalize_and_export(
     preview_slug: str = "",
 ) -> Path:
     """Apply UVs, center Lamp hot-core UVs, prune unused materials, bake dust-capped vertex colors, and export FBX."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     _center_lamp_uvs_radially(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))

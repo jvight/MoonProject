@@ -865,6 +865,7 @@ def _build_ssr3_body(root: bpy.types.Object) -> bpy.types.Object:
 # ---------------------------------------------------------------------------
 def _apply_ssr3_decades_at_rest_weathering(root: bpy.types.Object, footprint_radius: float = 0.85) -> None:
     """Bake Cycles AO + enhance sun-bleached upper edge wear (G) and heavy drifted regolith dust (B)."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius, bevel_wear_width=0.024)
 
     mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
@@ -2063,6 +2064,7 @@ def _build_topper_03_frost_block(root: bpy.types.Object) -> bpy.types.Object:
 
 def _apply_ssr3_cryo_lowlight_weathering(root: bpy.types.Object, footprint_radius: float = 0.65) -> None:
     """Bake vertex colours for `SSR3_Topper_03` tuned so gold foil, copper coils, and frost read in very low light."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=footprint_radius, bevel_wear_width=0.024)
 
     mesh_objs = [o for o in r1kit.collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
