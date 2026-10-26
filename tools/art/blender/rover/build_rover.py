@@ -364,6 +364,7 @@ def main(argv=None):
     build_solar_wing_model(DIMENSIONS, mats_sw)
     sw_objs = list(bpy.data.objects)
     sw_meshes = [o for o in sw_objs if o.type == "MESH"]
+    separate_coplanar_faces(sw_meshes)
     bake_vertex_colors(sw_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
     export_fbx(sw_objs, fbx_out_dir / "SolarWing.fbx", bake_space_transform=True)
     sw_stats = count_model_stats(sw_objs)
@@ -374,6 +375,7 @@ def main(argv=None):
     build_tape_deck_model(DIMENSIONS, mats_td)
     td_objs = list(bpy.data.objects)
     td_meshes = [o for o in td_objs if o.type == "MESH"]
+    separate_coplanar_faces(td_meshes)
     bake_vertex_colors(td_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
     export_fbx(td_objs, fbx_out_dir / "Kit_TapeDeck.fbx", bake_space_transform=True)
     td_stats = count_model_stats(td_objs)

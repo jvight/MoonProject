@@ -403,6 +403,7 @@ def export_pad_fragments(
     # 1. PadFragment_CoilPlate
     ruins_common.reset_ruins_scene()
     coil_root = build_coil_plate()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(coil_root))
     r1kit.apply_triplanar_uvs(coil_root, texel_scale=0.85)
     ruins_common.apply_signage_uvs(coil_root)
     ruins_common.bake_ruins_vertex_colors(coil_root, footprint_radius=0.35)
@@ -414,6 +415,7 @@ def export_pad_fragments(
     # 2. PadFragment_GuideRail
     ruins_common.reset_ruins_scene()
     rail_root = build_guide_rail()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(rail_root))
     r1kit.apply_triplanar_uvs(rail_root, texel_scale=0.85)
     ruins_common.apply_signage_uvs(rail_root)
     ruins_common.bake_ruins_vertex_colors(rail_root, footprint_radius=0.50)

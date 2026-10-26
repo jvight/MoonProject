@@ -986,6 +986,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         v_crop=(0.20, 0.90),
     )
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.65)
@@ -1123,6 +1124,7 @@ def build_decal_old_lander_blast(out_fbx: Path) -> None:
 
     r1kit.create_empty("Center_Anchor", root, (0.0, 0.0, 0.0))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.85)

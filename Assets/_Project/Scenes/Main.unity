@@ -4197,7 +4197,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9117181765473712056, guid: 5becb68ea09245445bfbf9ccd3c1929d, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.82895637
+      value: 0.87466973
       objectReference: {fileID: 0}
     - target: {fileID: 9117181765473712056, guid: 5becb68ea09245445bfbf9ccd3c1929d, type: 3}
       propertyPath: m_LocalRotation.x
@@ -4209,7 +4209,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9117181765473712056, guid: 5becb68ea09245445bfbf9ccd3c1929d, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.5593133
+      value: 0.48471943
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -20276,8 +20276,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.91611594, y: 1.0673286, z: 0.8460008}
-  m_Center: {x: -0.12747553, y: 0.29366416, z: -0.4230004}
+  m_Size: {x: 0.91611594, y: 1.0678943, z: 0.8460008}
+  m_Center: {x: -0.12747553, y: 0.29394704, z: -0.4230004}
 --- !u!4 &3318996143098955140 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 631059949676177587, guid: 2412cbd3726d8e24e893a5ef43d4f2a8, type: 3}
