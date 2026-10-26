@@ -310,6 +310,31 @@ namespace MoonProject.Art.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        /// <summary>
+        /// Stages the vista and writes the running scene's meshes (scene.obj) and the resolved poses (poses.json) for
+        /// the Unreal side; tools/art/blender/look_max_unreal_fbx.py turns them into one FBX with cameras and the sun.
+        /// </summary>
+        [UnityTest]
+        [Timeout(1800000)]
+        [PrebuildSetup(typeof(LookMaxScene))]
+        [PostBuildCleanup(typeof(LookMaxScene))]
+        public IEnumerator Scene_IsExported_ForUnreal()
+        {
+            LookMaxVista vista = LookMaxVista.Load();
+            string folder = Path.Combine(OutputRoot, "unreal-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            yield return Boot();
+            GameContext context = _bootstrap.Context;
+            var sky = (SkyCycleSystem)context.Get<ISunlight>();
+            yield return StageVista(vista, context);
+            sky.SetClockTime(vista.dayClock);
+            yield return null;
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, "poses.json"), vista.ResolvedPosesJson(sky, Ground));
+            string summary = LookMaxSceneExport.Write(folder);
+            Debug.Log($"[look-max] unreal export {folder}: {summary}");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
         /// <summary>Puts 07 and a built solar array on their marks and lets the physics settle.</summary>
         private IEnumerator StageVista(LookMaxVista vista, GameContext context)
         {
