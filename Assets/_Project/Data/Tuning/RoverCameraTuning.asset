@@ -36,10 +36,11 @@ MonoBehaviour:
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2
   _stargazeFallHalfLife: 0.4
-  _stargazeDelay: 3
+  _stargazeDelay: 8
   _stargazeBeginShare: 0.6
   _stargazeHoldShare: 0.3
   _stargazeMaxSpeed: 0.3
+  _autoRecenter: 0
   _recenterDelay: 1.5
   _stickRecenterDelay: 1.5
   _recenterMinSpeed: 2

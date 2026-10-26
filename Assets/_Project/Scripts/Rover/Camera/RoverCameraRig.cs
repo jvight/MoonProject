@@ -248,6 +248,11 @@ namespace MoonProject.Rover
             _orbitState = new CameraOrbit(_tuning);
             _framing = new TargetFraming(_tuning);
             _stargaze = new Stargaze(_tuning);
+            if (context.TryGet(out ISunlight sky) && sky.Phase == SkyPhase.Earthlit)
+            {
+                _stargaze.Arm();
+            }
+
             _opening = new WakeOpening(_tuning);
             _look = new LookSettings(_tuning);
             if (_faceInspectBody == null && _rover is Component roverComponent)
@@ -279,6 +284,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
                 context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
+                context.Events.Subscribe<SkyPhaseChanged>(OnSkyPhaseChanged),
                 context.Events.Subscribe<BuildPlacingChanged>(OnBuildPlacingChanged),
             };
             context.Register<IViewCamera>(this);
@@ -507,7 +513,7 @@ namespace MoonProject.Rover
             StepWallCompression(deltaTime, false);
             StepFreeLookDamping(deltaTime);
             PlaceTarget(deltaTime, false);
-            StepStargaze(deltaTime);
+            StepStargaze(viewInput, deltaTime);
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
@@ -1137,16 +1143,17 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Looking up with 07 at rest: 07 joins the gaze, and after a rest the stargazing beat begins (published so UI
-        /// and audio can quiet down); drive input or the view dropping ends it.
+        /// Looking up with 07 at rest on a night it has not gazed on yet: 07 joins the gaze, and after a long rest the
+        /// stargazing beat begins (published so UI and audio can quiet down); any drive or look input, or the view
+        /// dropping, ends it at once.
         /// </summary>
-        private void StepStargaze(float deltaTime)
+        private void StepStargaze(bool looking, float deltaTime)
         {
             bool moving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon
                 || _rover.Speed > _tuning.StargazeMaxSpeed;
             bool free = !_moment.IsActive && !_tethered
                 && !_opening.IsActive && _held.Weight <= 0f && !_faceInspectOpen && _faceInspectWeight <= 0f;
-            if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, free, deltaTime))
+            if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, looking, free, deltaTime))
             {
                 _events.Publish(new StargazingChanged(_stargaze.IsActive));
             }
@@ -1195,6 +1202,15 @@ namespace MoonProject.Rover
         /// lit lamps beyond it, holds, then eases back to the chase frame.
         /// </summary>
         /// <summary>The dock let go: the view turns with 07 while it eases round on the pad.</summary>
+        /// <summary>Each night 07 may gaze once: the earthlit phase arms the stargazing beat.</summary>
+        private void OnSkyPhaseChanged(SkyPhaseChanged sky)
+        {
+            if (sky.Phase == SkyPhase.Earthlit)
+            {
+                _stargaze.Arm();
+            }
+        }
+
         private void OnDockChanged(RoverDockChanged dock)
         {
             if (dock.Docked)

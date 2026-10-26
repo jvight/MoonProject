@@ -30,6 +30,9 @@ namespace MoonProject.Rover.Tests
         public void SetUp()
         {
             _tuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
+            var serialized = new SerializedObject(_tuning);
+            serialized.FindProperty("_autoRecenter").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
             _orbit = new CameraOrbit(_tuning);
             _roverYaw = 0f;
             _turnRate = 0f;
@@ -38,6 +41,30 @@ namespace MoonProject.Rover.Tests
             _stick = false;
             _mayRecenter = true;
             Park();
+        }
+
+        [Test]
+        public void AutoRecenter_IsOffByDefault_TheViewStaysWhereThePlayerLeftIt()
+        {
+            var shipped = ScriptableObject.CreateInstance<RoverCameraTuning>();
+            try
+            {
+                Assert.IsFalse(shipped.AutoRecenter, "The player's orbit is theirs.");
+                var orbit = new CameraOrbit(shipped);
+                orbit.Reset(0f);
+                orbit.AdoptBearing(120f);
+                for (float t = 0f; t < 15f; t += Frame)
+                {
+                    orbit.Step(new CameraOrbitInput(Vector2.zero, false, false, 0f, 6f, 1f, 0.75f, 0f, true, true), Frame);
+                }
+
+                Assert.AreEqual(120f, orbit.Bearing, 0.5f, "Driving on for fifteen seconds never swings the view round.");
+                Assert.AreEqual(0f, orbit.RecenterWeight);
+            }
+            finally
+            {
+                Object.DestroyImmediate(shipped);
+            }
         }
 
         [TearDown]

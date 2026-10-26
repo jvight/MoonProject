@@ -10,7 +10,8 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// The camera rule of docs/design/first-hour-v2.md §9 with the real wiring (stick look, Cinemachine): with the view
-    /// held 120 deg to the side, a 90 deg turn by 07 leaves the view's bearing alone. Logs the orbit's bearing and the
+    /// held 120 deg to the side, a 90 deg turn by 07 leaves the view's bearing alone. The auto-recenter these tests
+    /// exercise is the tuning's opt-in (off as shipped). Logs the orbit's bearing and the
     /// rendered camera's heading every tenth of a second.
     /// </summary>
     public sealed class RoverCameraBearingTests : InputTestFixture
@@ -33,6 +34,9 @@ namespace MoonProject.Rover.PlayModeTests
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
             _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f);
+            var tuning = new UnityEditor.SerializedObject(_rover.CameraTuning);
+            tuning.FindProperty("_autoRecenter").boolValue = true;
+            tuning.ApplyModifiedPropertiesWithoutUndo();
         }
 
         public override void TearDown()

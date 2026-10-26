@@ -118,9 +118,9 @@ namespace MoonProject.Rover
         [Range(0.05f, 3f)]
         [SerializeField] private float _stargazeFallHalfLife = 0.4f;
 
-        [Tooltip("Seconds of rest while looking up before the stargazing beat begins (HUD fades, music thins).")]
+        [Tooltip("Seconds of rest while looking up, on a night 07 has not gazed on yet, before the stargazing beat begins (HUD fades, music thins): a rare moment, so a long rest.")]
         [Range(0.5f, 15f)]
-        [SerializeField] private float _stargazeDelay = 3f;
+        [SerializeField] private float _stargazeDelay = 8f;
 
         [Tooltip("How far up the view must look (0..1 between start and full elevation) for the beat to begin.")]
         [Range(0.1f, 1f)]
@@ -136,6 +136,10 @@ namespace MoonProject.Rover
         [SerializeField] private float _stargazeMaxSpeed = 0.3f;
 
         [Header("Following and auto-recenter")]
+        [Tooltip("When on, the view eases back behind 07 by itself while it drives, after the delays below. Off: the "
+            + "player's orbit stays exactly where they left it, and only the recenter button brings it back.")]
+        [SerializeField] private bool _autoRecenter;
+
         [Tooltip("Seconds after the mouse stops before the camera may ease back behind 07.")]
         [Range(0.5f, 20f)]
         [SerializeField] private float _recenterDelay = 1.5f;
@@ -814,6 +818,8 @@ namespace MoonProject.Rover
         public float StargazeHoldShare => Mathf.Min(_stargazeHoldShare, _stargazeBeginShare);
 
         public float StargazeMaxSpeed => _stargazeMaxSpeed;
+
+        public bool AutoRecenter => _autoRecenter;
 
         public float RecenterDelay => _recenterDelay;
 

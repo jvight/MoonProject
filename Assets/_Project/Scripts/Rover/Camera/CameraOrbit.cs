@@ -19,7 +19,9 @@ namespace MoonProject.Rover
     /// turn rate is capped and eases out over the last degrees, and the elevation returns at its own capped rate.
     /// Any look input cancels it at once (the camera just stops easing; nothing jumps).</item>
     /// <item>The recenter button eases behind 07 over a short, eased time, whatever else is going on.</item>
-    /// <item>The Gentle camera never recenters by itself and keeps the field of view still.</item>
+    /// <item>The view never recenters by itself unless the tuning asks for it (<see cref="RoverCameraTuning.AutoRecenter"/>,
+    /// off): the player's orbit stays where they left it; the recenter button brings it back. The Gentle camera never
+    /// recenters by itself and keeps the field of view still.</item>
     /// <item>Driving downhill eases in extra elevation; the field of view widens a little with speed.</item>
     /// </list>
     /// </summary>
@@ -266,7 +268,7 @@ namespace MoonProject.Rover
             float delayScale = Mathf.Lerp(_tuning.RecenterSlowDelayScale, 1f, speed01);
             float rateShare = Mathf.Lerp(_tuning.RecenterSlowRateShare, 1f, speed01);
 
-            bool may = !Gentle && !_buttonEasing && input.MayRecenter && _idleTime >= _idleDelay * delayScale
+            bool may = !Gentle && _tuning.AutoRecenter && !_buttonEasing && input.MayRecenter && _idleTime >= _idleDelay * delayScale
                 && _driveTime >= _tuning.RecenterDriveSeconds;
             _recenterWeight = may
                 ? Mathf.Min(1f, _recenterWeight + deltaTime / _tuning.RecenterRampTime)
