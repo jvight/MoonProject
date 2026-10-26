@@ -11,8 +11,9 @@ namespace MoonProject.Art.PlayModeTests
     /// range, tighter biases), gives the capture camera high-quality sharpened TAA, screen-space contact shadows
     /// (<see cref="LookMaxContactShadows"/>), a regolith bounce fill (<see cref="LookMaxBounceLight"/>) and denser
     /// near terrain detail (<see cref="LookMaxTerrainDetail"/>); "aces" is "max" tone-mapped by ACES instead of the
-    /// game's Neutral, a little brighter; "stp" is "max" rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original asset
-    /// back.
+    /// game's Neutral, a little brighter; "cc0" is "max" with the CC0 photo-scanned regolith and rock layers; "stp" is
+    /// "max" rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original
+    /// asset back.
     /// </summary>
     public sealed class LookMaxProfile : System.IDisposable
     {
@@ -20,9 +21,10 @@ namespace MoonProject.Art.PlayModeTests
         public const string Max = "max";
         public const string Stp = "stp";
         public const string Aces = "aces";
+        public const string Cc0 = "cc0";
 
         /// <summary>Every profile, in the order the session shoots them.</summary>
-        public static readonly string[] All = { Shipped, Max, Aces, Stp };
+        public static readonly string[] All = { Shipped, Max, Cc0, Aces, Stp };
 
         private const int MaxShadowResolution = 8192;
         private const float MaxShadowDistance = 220f;
@@ -42,7 +44,7 @@ namespace MoonProject.Art.PlayModeTests
         private readonly GameObject _volumeHost;
         private readonly VolumeProfile _volumeProfile;
 
-        public LookMaxProfile(string name, Camera camera)
+        public LookMaxProfile(string name, Camera camera, LookMaxVista vista)
         {
             Name = name;
             _original = QualitySettings.renderPipeline;
@@ -52,12 +54,13 @@ namespace MoonProject.Art.PlayModeTests
                 return;
             }
 
-            if (name != Max && name != Stp && name != Aces)
+            if (name != Max && name != Stp && name != Aces && name != Cc0)
             {
                 throw new System.ArgumentException($"Unknown look-max profile '{name}'.", nameof(name));
             }
 
-            var source = (UniversalRenderPipelineAsset)(_original != null ? _original : GraphicsSettings.defaultRenderPipeline);
+            RenderPipelineAsset current = _original != null ? _original : GraphicsSettings.defaultRenderPipeline;
+            var source = (UniversalRenderPipelineAsset)current;
             _clone = Object.Instantiate(source);
             _clone.name = source.name + " (look-max " + name + ")";
             _clone.mainLightShadowmapResolution = MaxShadowResolution;
@@ -79,7 +82,7 @@ namespace MoonProject.Art.PlayModeTests
             data.taaSettings.contrastAdaptiveSharpening = TaaSharpening;
             _contactShadows = new LookMaxContactShadows(camera);
             _bounce = LookMaxBounceLight.Create();
-            _terrain = new LookMaxTerrainDetail();
+            _terrain = new LookMaxTerrainDetail(name == Cc0 ? vista.cc0 : null);
             if (name == Aces)
             {
                 _volumeHost = new GameObject("LookMaxAcesVolume");

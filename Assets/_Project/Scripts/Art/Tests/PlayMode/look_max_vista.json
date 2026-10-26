@@ -5,6 +5,8 @@
   "nightClock": 4800,
   "settleFrames": 24,
   "timingFrames": 40,
+  "cc0": {"folder": "../cc0-processed", "regolith": "dry_ground_rocks", "regolithMetres": 4.0, "rock": "Rock030",
+          "rockMetres": 2.0, "nearBumpScale": 0.8},
   "rover": {"x": 44.0, "z": 138.0, "yaw": 20.0},
   "array": {"x": 56.0, "z": 146.0, "yaw": 100.0},
   "poses": [

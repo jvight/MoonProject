@@ -36,7 +36,7 @@ namespace MoonProject.Art.PlayModeTests
             _pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false, false);
         }
 
-        /// <summary>Median and 90th-percentile frame time of the last <see cref="Time"/> run, in milliseconds.</summary>
+        /// <summary>Median and 90th-percentile frame time of the last <see cref="Time"/> run, in ms.</summary>
         public string TimingSummary
         {
             get
@@ -67,7 +67,7 @@ namespace MoonProject.Art.PlayModeTests
             target.dithering = source.dithering;
         }
 
-        /// <summary>Renders <paramref name="frames"/> frames from where the camera stands, then saves the last one.</summary>
+        /// <summary>Renders <paramref name="frames"/> frames from where the camera stands and saves the last.</summary>
         public IEnumerator Shoot(int frames, string path)
         {
             for (int i = 0; i < frames; i++)

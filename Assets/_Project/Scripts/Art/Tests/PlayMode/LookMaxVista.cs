@@ -24,6 +24,7 @@ namespace MoonProject.Art.PlayModeTests
         public float nightClock;
         public int settleFrames;
         public int timingFrames;
+        public Cc0 cc0;
         public Mark rover;
         public Mark array;
         public Pose[] poses;
@@ -47,7 +48,7 @@ namespace MoonProject.Art.PlayModeTests
             Place(camera, Absolute(pose.eye, ground), Absolute(pose.look, ground), pose.fov);
         }
 
-        /// <summary>Points <paramref name="camera"/> at <paramref name="t"/> (0..1) along the move, eased in and out.</summary>
+        /// <summary>Points <paramref name="camera"/> at <paramref name="t"/> (0..1) along the move, eased.</summary>
         public void AimMove(Camera camera, float t, Func<float, float, float> ground)
         {
             float s = Mathf.SmoothStep(0f, 1f, t);
@@ -56,7 +57,7 @@ namespace MoonProject.Art.PlayModeTests
             Place(camera, eye, look, move.fov);
         }
 
-        /// <summary>Every pose, the move's ends, the marks and the sun at both clock times, resolved and absolute.</summary>
+        /// <summary>Every pose, the move's ends, the marks and the sun at both clock times, absolute.</summary>
         public string ResolvedPosesJson(SkyCycleSystem sky, Func<float, float, float> ground)
         {
             var json = new StringBuilder();
@@ -133,6 +134,22 @@ namespace MoonProject.Art.PlayModeTests
             {
                 return new Vector3(x, ground(x, z), z);
             }
+        }
+
+        /// <summary>
+        /// The CC0 terrain layers (prepared by tools/art/look_max_cc0.py, outside git; <see cref="folder"/> is relative
+        /// to the project): the regolith and steep-rock sets, the ground each covers in metres, and the near normal
+        /// strength the regolith set wants.
+        /// </summary>
+        [Serializable]
+        public sealed class Cc0
+        {
+            public string folder;
+            public string regolith;
+            public float regolithMetres;
+            public string rock;
+            public float rockMetres;
+            public float nearBumpScale;
         }
 
         /// <summary>A still: eye and look-at point (x, height above ground, z) and vertical field of view.</summary>

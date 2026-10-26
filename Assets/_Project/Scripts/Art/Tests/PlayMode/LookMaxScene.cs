@@ -17,7 +17,9 @@ namespace MoonProject.Art.PlayModeTests
     {
         public const string ScenePath = Folder + "/LookMaxMain.unity";
 
-        /// <summary>"look-max-&lt;process id&gt;", this editor's own: see <see cref="BootstrapHarness.ProcessSlot"/>.</summary>
+        /// <summary>
+        /// "look-max-&lt;process id&gt;", this editor's own: see <see cref="BootstrapHarness.ProcessSlot"/>.
+        /// </summary>
         public static string SaveSlot => BootstrapHarness.ProcessSlot("look-max");
 
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";

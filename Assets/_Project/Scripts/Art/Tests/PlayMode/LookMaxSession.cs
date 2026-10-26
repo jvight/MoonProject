@@ -36,6 +36,11 @@ namespace MoonProject.Art.PlayModeTests
         private const float SunScanEnd = 2800f;
         private const float SunScanStep = 100f;
         private const float GroundProbeHeight = 400f;
+        private static readonly string[] MoveProfiles =
+        {
+            LookMaxProfile.Shipped, LookMaxProfile.Max, LookMaxProfile.Cc0,
+        };
+
         private const string ArrayPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/SolarArray.prefab";
 
         private static readonly float[] ProbeClockTimes = { 0f, 40f, 200f, 600f, 900f, 1500f, 2200f, 2650f, 4800f };
@@ -200,7 +205,7 @@ namespace MoonProject.Art.PlayModeTests
                     camera.CopyFrom(view);
                     camera.enabled = false;
                     LookMaxShots.CopyPipelineSettings(view, camera);
-                    var profile = new LookMaxProfile(profileName, camera);
+                    var profile = new LookMaxProfile(profileName, camera, vista);
                     var shots = new LookMaxShots(camera, vista.width, vista.height);
                     try
                     {
@@ -251,7 +256,7 @@ namespace MoonProject.Art.PlayModeTests
 
         /// <summary>
         /// Renders the vista's camera move by day C, one frame per player frame (so TAA sees real motion), as a JPEG
-        /// sequence per profile (shipped and max); tools/art/look_max_video.py encodes them to MP4.
+        /// sequence per profile (shipped, max, cc0); tools/art/look_max_video.py encodes them to MP4.
         /// </summary>
         [UnityTest]
         [Timeout(7200000)]
@@ -270,14 +275,14 @@ namespace MoonProject.Art.PlayModeTests
             view.enabled = false;
             try
             {
-                foreach (string profileName in new[] { LookMaxProfile.Shipped, LookMaxProfile.Max })
+                foreach (string profileName in MoveProfiles)
                 {
                     var host = new GameObject("LookMaxMoveCamera " + profileName);
                     Camera camera = host.AddComponent<Camera>();
                     camera.CopyFrom(view);
                     camera.enabled = false;
                     LookMaxShots.CopyPipelineSettings(view, camera);
-                    var profile = new LookMaxProfile(profileName, camera);
+                    var profile = new LookMaxProfile(profileName, camera, vista);
                     var shots = new LookMaxShots(camera, vista.width, vista.height);
                     try
                     {
@@ -338,7 +343,8 @@ namespace MoonProject.Art.PlayModeTests
         /// <summary>Puts 07 and a built solar array on their marks and lets the physics settle.</summary>
         private IEnumerator StageVista(LookMaxVista vista, GameContext context)
         {
-            context.Get<IRoverPlacement>().PlaceAt(vista.rover.Position(Ground), Quaternion.Euler(0f, vista.rover.yaw, 0f));
+            context.Get<IRoverPlacement>().PlaceAt(vista.rover.Position(Ground),
+                Quaternion.Euler(0f, vista.rover.yaw, 0f));
 #if UNITY_EDITOR
             var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(ArrayPrefab);
             Assert.IsNotNull(prefab, ArrayPrefab + " exists");

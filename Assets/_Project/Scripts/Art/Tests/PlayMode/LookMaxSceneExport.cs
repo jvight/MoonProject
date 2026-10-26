@@ -21,7 +21,7 @@ namespace MoonProject.Art.PlayModeTests
         private const int SkyQueue = 2900;
         private static readonly string[] SkippedShaderWords = { "Sky", "Earth", "Glint", "Halo", "Beacon", "Hologram" };
 
-        /// <summary>Writes scene.obj and scene.mtl into <paramref name="folder"/>; returns a one-line summary.</summary>
+        /// <summary>Writes scene.obj and scene.mtl into <paramref name="folder"/>; returns a summary line.</summary>
         public static string Write(string folder)
         {
             Directory.CreateDirectory(folder);
