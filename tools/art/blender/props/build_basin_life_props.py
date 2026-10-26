@@ -567,6 +567,7 @@ def build_mission_flag() -> bpy.types.Object:
         offset=0.0018,
     )
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.55)
@@ -1077,6 +1078,7 @@ def build_seismic_station() -> bpy.types.Object:
     r1kit.create_empty("CentralBox_Anchor", parent=root, pivot_u=(bx_center, 0.0, bz_center))
     r1kit.create_empty("StatusLamp_Dead", parent=root, pivot_u=(lamp_pos[0], lamp_pos[1] + 0.032, lamp_pos[2]))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.65)
@@ -1541,6 +1543,7 @@ def build_retroreflector() -> bpy.types.Object:
     r1kit.create_empty("Base_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
     r1kit.create_empty("Array_Anchor", parent=root, pivot_u=rp(0.0, 0.0, -0.022))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.42)
@@ -1985,6 +1988,7 @@ def build_survey_tripod() -> bpy.types.Object:
     r1kit.create_empty("Head_Anchor", parent=root, pivot_u=head_piv)
     r1kit.create_empty("BuckledKnee_Anchor", parent=root, pivot_u=knee_piv)
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.68)
@@ -2445,6 +2449,7 @@ def build_sample_rack() -> bpy.types.Object:
     r1kit.create_empty("Tools_Anchor", parent=root, pivot_u=(-0.06, 0.78, -0.035))
     r1kit.create_empty("FallenTube_Anchor", parent=root, pivot_u=fallen_piv)
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.55)
@@ -2489,6 +2494,7 @@ def build_decal_bootprint_trail() -> bpy.types.Object:
     r1kit.create_empty("End_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.5 * length_z))
     r1kit.create_empty("Center_Anchor", parent=root, pivot_u=(0.0, 0.0, 0.0))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.55)

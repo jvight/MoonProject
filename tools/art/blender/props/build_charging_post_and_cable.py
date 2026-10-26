@@ -276,6 +276,7 @@ def build_dead_charging_post() -> bpy.types.Object:
     r1kit.create_empty("StatusWindow_Dead", parent=root, pivot_u=(0.0, 0.82, -0.22))
     r1kit.create_empty("CableOrigin_Anchor", parent=root, pivot_u=(0.0, 0.042, 0.46))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.45)
@@ -339,6 +340,7 @@ def build_ground_cable_segment() -> bpy.types.Object:
     r1kit.create_empty("Start_Anchor", parent=root, pivot_u=(0.0, 0.042, -4.0))
     r1kit.create_empty("End_Anchor", parent=root, pivot_u=(0.0, 0.042, 4.0))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.35)
@@ -408,6 +410,7 @@ def build_ground_cable_end() -> bpy.types.Object:
     r1kit.create_empty("Start_Anchor", parent=root, pivot_u=(0.0, 0.042, 0.0))
     r1kit.create_empty("Plug_Anchor", parent=root, pivot_u=(0.0, 0.35, 1.56))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=0.35)

@@ -209,6 +209,7 @@ def build_apron_markings() -> bpy.types.Object:
     r1kit.create_empty("RoverApproach_Anchor", parent=root, pivot_u=(0.0, 0.0, -2.26))
     r1kit.create_empty("CableChannel_Anchor", parent=root, pivot_u=(0.0, 0.01, 2.38))
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
     # Map the 3 stencil plaques onto R1_Signage UV cells
     map_top_planar_uv_rect(

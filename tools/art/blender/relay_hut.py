@@ -183,6 +183,7 @@ def build_relay_hut() -> bpy.types.Object:
     _build_door(root)
     _build_mast(root)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=HUT_DIMS["width"] * 0.6)
     return root
 

@@ -46,6 +46,7 @@ from r1kit import (
     create_mesh_node,
     export_fbx,
     reset_scene,
+    separate_coplanar_faces,
 )
 from rover_parts import create_material_library
 from build_rover import DIMENSIONS, MATERIALS
@@ -1975,6 +1976,7 @@ def build_and_export_kit(kit_name: str, fbx_out_path: str | None = None):
 
     objs = list(bpy.data.objects)
     meshes = [o for o in objs if o.type == "MESH"]
+    separate_coplanar_faces(meshes)
     bake_vertex_colors(meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
     export_fbx(objs, out_path, bake_space_transform=True)
     stats = count_model_stats(objs)

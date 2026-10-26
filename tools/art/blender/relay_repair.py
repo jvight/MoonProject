@@ -187,6 +187,7 @@ def build_feed_unit_spare() -> bpy.types.Object:
     _build_feed_unit_label(root)
     _build_feed_unit_pigtail(root)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=FEED_UNIT_DIMS["body_length"] * 0.6)
     return root
 
@@ -349,6 +350,7 @@ def build_service_cabinet() -> bpy.types.Object:
     _build_cabinet_lamp(root)
     _build_cabinet_door(root)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=CABINET_DIMS["width"] * 0.6)
     pose_service_cabinet_rest(root)
     bpy.context.view_layer.update()
@@ -442,6 +444,7 @@ def build_relay_contact_pad() -> bpy.types.Object:
     _build_pad_contact_shoes(root)
     _build_pad_conduit(root)
     bpy.context.view_layer.update()
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=PAD_DIMS["length"] * 0.55)
     return root
 

@@ -575,6 +575,7 @@ def build_dead_antenna_mast() -> bpy.types.Object:
                 mesh.materials.append(mats[m_name])
 
     antenna_mast.pose_antenna_mast_rest(root)
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, center_lamp_amber=True)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(

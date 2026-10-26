@@ -236,6 +236,7 @@ def apply_cable_dust_uvs_and_colors(
     extra_top_dust: float = 0.34,
 ) -> None:
     """Project UVs so a dust layer reads cleanly on top and bake regolith-sunk + top-crown vertex colors."""
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
 
     # Refine UVs on cable meshes so U runs along the horizontal path and V maps bottom (0.0) -> top crown (1.0)

@@ -330,6 +330,7 @@ def _finalize_debris_object(
     root = bpy.data.objects.new(name, mesh)
     bpy.context.scene.collection.objects.link(root)
 
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root, texel_scale=0.85)
 
     if signage_cell is not None and "R1_Signage" in slot_names:

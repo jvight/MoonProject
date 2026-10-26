@@ -361,6 +361,7 @@ def build_ice_core_tube() -> bpy.types.Object:
     _center_hierarchy_at_origin(root)
 
     # Apply base triplanar UVs, then override LabelPlate, CoreSample, and FrostCap with exact planar UVs
+    r1kit.separate_coplanar_faces(r1kit.collect_hierarchy(root))
     r1kit.apply_triplanar_uvs(root)
 
     tilt_rad = math.radians(-26.0)
