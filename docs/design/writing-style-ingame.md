@@ -52,7 +52,7 @@ translation, or like a novel.
 | 2 | `next.v3.tow_module` | Mô-đun điện là khung của cụm pin. Kéo nó về sân. | **Kéo mô-đun về bãi xây: nó là khung của bộ tích điện** | Tow it to the build site: it's the battery bank's frame |
 | 3 | `next.v2.scan_tower` | 07 chưa phát sóng được. Quét tháp radio để lấy bản vẽ ăng-ten. | **Chưa phát sóng được. Quét tháp radio** | Can't transmit yet. Scan the radio tower |
 | 4 | `next.v3.go_relay` | relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó. | **Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó** | Relay 1 is fading. Go fix it |
-| 5 | `next.v3.scan_elder06` | 06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó. | **Trạm 2 im lặng. Tìm 06 ở cửa hẻm** | Relay 2 went quiet. Find 06 at the canyon mouth |
+| 5 | `next.v3.scan_elder06` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | 06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó. | **Trạm 2 im lặng. Tìm 06 ở cửa hẻm** | Relay 2 went quiet. Find 06 at the canyon mouth |
 | 6 | `next.v2.build_pad` | Xây bệ sạc trên bãi kẻ vạch. | **Xây bệ sạc ở bãi xây** | Build the charging pad at the build site |
 | 7 | `next.v3.dock_for_dusk` | Đỗ vào bệ để kết thúc ngày. | **Về bệ sạc nghỉ qua đêm** | Dock on the pad for the night |
 | 8 | `next.v3.visit_site` | Đã có điện. Hãy ghé trạm địa chấn hoặc khu nhà ở trước khi chiều xuống. | **Đã có điện. Ghé trạm địa chấn hoặc khu nhà ở** | Power's on. Visit the seismic station or the habitat |
@@ -60,7 +60,7 @@ translation, or like a novel.
 | 10 | `next.v2.cut_optics` | Cắt rời các tấm pin và hộp nối dây của giàn pin đổ. | **Cắt tấm pin và hộp dây khỏi dàn pin đổ** | Cut the panels and junction box free |
 | 11 | `build.reason.frame` | Kéo mô-đun nguồn về sân trước | **Cần kéo mô-đun nguồn về đây trước** | Tow the power module here first |
 | 12 | `ui.unlock.blueprint` | Đã học bản vẽ: {0} | **Bản vẽ mới: {0}** | New blueprint: {0} |
-| 13 | `next.v3.dock_for_rack` | Đỗ lên bệ sạc để mở giá linh kiện. | **Đỗ lên bệ sạc để mở giá lắp** | Dock on the pad to open the rack |
+| 13 | `next.v3.dock_for_rack` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Đỗ lên bệ sạc để mở giá linh kiện. | **Đỗ lên bệ sạc để mở giá lắp** | Dock on the pad to open the rack |
 | 14 | `hint.openbuild` | Xây dựng | **Xây** | Build |
 | 15 | `ui.cargo.drag.nowhere` | 07 chưa có chỗ lắp món này | **Chưa lắp được món này** | Nothing takes this yet |
 
@@ -88,12 +88,13 @@ translation, or like a novel.
 | `next.v3.dock_for_dusk` | (sample 7) | Về bệ sạc nghỉ qua đêm | (sample 7) | Dock on the pad for the night |
 | `next.v3.transmit` | Phát sóng từ cột ăng-ten. | Phát sóng từ cột ăng-ten | Transmit from the antenna mast. | Transmit from the antenna mast |
 | `next.v3.visit_site` | (sample 8) | Đã có điện. Ghé trạm địa chấn hoặc khu nhà ở | (sample 8) | Power's on. Visit the seismic station or the habitat |
-| `next.v3.await_night` | Căn cứ đã sẵn sàng cho đêm. | Căn cứ đã sẵn sàng qua đêm | The base is ready for the night. | The base is ready for night |
+| `next.v3.await_night` *(replaced by `next.v3.dock_for_night` in cl-v3-dayend)* | Căn cứ đã sẵn sàng cho đêm. | — | The base is ready for the night. | — |
+| `next.v3.dock_for_night` | — | Căn cứ đã sẵn sàng. Về bệ sạc đón đêm | — | The base is ready. Dock on the pad for nightfall |
 | `next.v3.go_relay` | (sample 4) | Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó | (sample 4) | Relay 1 is fading. Go fix it |
-| `next.v3.scan_elder06` | (sample 5) | Trạm 2 im lặng. Tìm 06 ở cửa hẻm | (sample 5) | Relay 2 went quiet. Find 06 at the canyon mouth |
-| `next.v3.cut_headlamp_crate` | Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha. | Cắt thùng cạnh 06 lấy linh kiện đèn pha | Cut the crate by 06 for the headlamp's parts. | Cut the crate by 06 for headlamp parts |
-| `next.v3.assemble_headlamp` | Lắp đèn pha SSR-3 ở giá cạnh bệ sạc. | Lắp đèn pha ở giá lắp | Assemble the SSR-3 headlamp at the rack by the pad. | Assemble the headlamp at the rack |
-| `next.v3.dock_for_rack` | (sample 13) | Đỗ lên bệ sạc để mở giá lắp | (sample 13) | Dock on the pad to open the rack |
+| `next.v3.scan_elder06` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | (sample 5) | Trạm 2 im lặng. Tìm 06 ở cửa hẻm | (sample 5) | Relay 2 went quiet. Find 06 at the canyon mouth |
+| `next.v3.cut_headlamp_crate` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha. | Cắt thùng cạnh 06 lấy linh kiện đèn pha | Cut the crate by 06 for the headlamp's parts. | Cut the crate by 06 for headlamp parts |
+| `next.v3.assemble_headlamp` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | Lắp đèn pha SSR-3 ở giá cạnh bệ sạc. | Lắp đèn pha ở giá lắp | Assemble the SSR-3 headlamp at the rack by the pad. | Assemble the headlamp at the rack |
+| `next.v3.dock_for_rack` *(removed in S4: 06, the headlamp and the rack are an optional pull)* | (sample 13) | Đỗ lên bệ sạc để mở giá lắp | (sample 13) | Dock on the pad to open the rack |
 | `battery.low.lander` | Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc. | Pin yếu. Xây bệ sạc cạnh tàu đổ bộ | Battery low. Build a pad at the lander to charge. | Battery low. Build a pad by the lander |
 | `battery.low.pad` | Pin yếu. Hãy về bệ sạc. | Pin yếu. Về bệ sạc | Battery low. Return to your pad. | Battery low. Head back to a pad |
 | `ui.unlock.blueprint` | (sample 12) | Bản vẽ mới: {0} | Blueprint learned: {0} | New blueprint: {0} |

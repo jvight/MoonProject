@@ -179,8 +179,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres from a panel on a wall 07 scans it from, square to it: the panel fills the view.</summary>
         private const float PanelStandOff = 2.5f;
 
-        // The airlock's door sign and readout, scanned in whichever order the view frames them, with a spare look.
-        private const int AirlockScans = 3;
+        // Seconds 07, standing facing the airlock panel, may take to read it (a free read: no E).
+        private const float FreeReadTimeout = 5f;
 
         /// <summary>Metres from a line-up spot that count as there: it only turns 07 roughly to its target.</summary>
         private const float LineUpArrive = 3f;
@@ -365,8 +365,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TowTheModuleHome(pad);
             yield return ExpectStep(OpeningKeys.BuildBatteryBank, "B9: the module is home, build the bank on it");
             yield return Build(StructureIds.BatteryBank, ModulePosition(), "B9: the battery bank on the module");
-            yield return UntilReached(OpeningMilestone.NightReady, "night-ready: the bank is built and wired to the pad");
-            yield return TheFirstNightfall();
+            yield return ExpectStep(OpeningKeys.DockForNight, "B10: the base night-ready, dock on the pad for the night");
+            yield return TheFirstNightfall(pad);
             yield return ExpectStep(OpeningKeys.ScanTower, "B11: after nightfall");
             yield return CutTheCrates("RadioTower", "the tower's mast sections, feed cable and dish panels");
             yield return ScanTheSet("ruin.RadioTower", "the radio tower ruin");
@@ -601,7 +601,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _gameplay.Opening.DuskBegun, DuskTimeout,
                 "the dock after the visit begins the first dusk",
                 () => $"on the pad {_gameplay.PadLock.OnPad}, lock raised {_gameplay.PadLock.Raised}");
-            End("R6: dock, and the first dusk begins", $"{_gameplay.Battery.Model.Charge01:P0}");
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => !_gameplay.DayEnd.Keep, battery.Cells * 6f, "the pad keeps 07 until it is full");
+            Assert.IsTrue(battery.CellsFull, "07 leaves the day's last dock full");
+            End("R6: dock, and the first dusk begins", $"{battery.Charge01:P0}");
         }
 
         private IEnumerator ReadTheAirlockPanel()
@@ -614,20 +617,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.IsNotNull(panel, "the habitat has its airlock panel to read");
                 Vector3 outward = Flat(panel.Point - Ruin("HabitatModules").position).normalized;
 
-                // The habitat's first fragment is the sign over the airlock door, beside and above the readout: from
-                // the readout's stand-off the brackets rest on whichever of the two the view frames more squarely, so
-                // a player scans that one, then the other, until the readout is read.
-                ScanFragment door = _gameplay.Scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0));
-                Assert.IsNotNull(door, "the habitat's first fragment is over the airlock door");
-                for (int scan = 0; scan < AirlockScans && !panel.Scanned; scan++)
-                {
-                    ScanFragment aim = door.Scanned ? panel : door;
-                    ScanFragment beside = aim == door ? panel : null;
-                    yield return Scan(aim, "the airlock door and its readout", outward, PanelStandOff, beside);
-                }
+                // A free read (payoff audit §3): no brackets, no chip, no E; 07 stands facing it and its words show.
+                Assert.IsTrue(panel.FreeRead, "the airlock panel is a free read");
+                yield return DriveTo(Flat(panel.Point), PanelStandOff, "the spot facing the airlock panel",
+                    ApproachThrottle);
+                Look(panel.Point);
+                yield return Until(() => panel.Scanned, FreeReadTimeout, "07 facing the airlock panel reads it",
+                    () => $"the view {ViewOff(panel.Point):F0} deg off it, {_rover.Speed:F2} m/s");
+                Assert.AreNotEqual(panel, _gameplay.Scans.Candidate, "a free read is never a scan candidate");
                 Assert.AreEqual(1, read.Count, "the panel's readout shows once");
                 Assert.AreEqual(panel.FragmentId, read[0].StoryId, "it is the airlock panel that was read");
-                Assert.IsTrue(panel.Scanned, "the airlock panel is scanned");
+                Assert.IsTrue(panel.Scanned, "the airlock panel is read");
             }
 
             Capture("07-the-airlock-panel");
@@ -651,16 +651,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff)
         {
-            yield return Scan(fragment, what, preferred, standOff, null);
-        }
-
-        /// <summary>
-        /// As the scan coming in along <paramref name="preferred"/>, where the brackets may rest on
-        /// <paramref name="beside"/> instead (a neighbour on the same face): whichever the view frames is scanned.
-        /// </summary>
-        private IEnumerator Scan(ScanFragment fragment, string what, Vector3 preferred, float standOff,
-            ScanFragment beside)
-        {
             ScanField scans = _gameplay.Scans;
             Vector3 away = ClearSide(fragment.Point, preferred, standOff, fragment.FragmentId, null);
             if (Clear(fragment.Point + away * (standOff + ScanLineUp), null))
@@ -674,10 +664,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // The candidate the brackets rested on, kept: the next frame's candidate may already have moved on.
             ScanFragment framed = null;
-            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ||
-                                               (beside != null && !beside.Scanned && scans.Candidate == beside)
-                    ? scans.Candidate
-                    : framed) != null,
+            yield return Until(() => (framed = OnSetCandidate(scans, fragment) ? scans.Candidate : framed) != null,
                 ScanLookTimeout,
                 $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show",
                 () => $"scan candidate {scans.Candidate?.FragmentId ?? "none"} (scanned " +
@@ -1012,12 +999,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("B6: charge on the pad", $"{battery.Charge01:P0}, LANDER RESERVE · 0%");
         }
 
-        /// <summary>B10: the night-ready base lets the first sunset run; the first night falls on a lit base.</summary>
-        private IEnumerator TheFirstNightfall()
+        /// <summary>
+        /// B10: with the base night-ready, 07 docks; the first sunset runs with 07 locked on the pad, and the first night
+        /// falls on a lit base; the pad lets 07 go once the night has fallen and its cells are full.
+        /// </summary>
+        private IEnumerator TheFirstNightfall(Vector3 pad)
         {
             Begin();
             var sunlight = _context.Get<ISunlight>();
-            yield return Until(() => sunlight.Phase == SkyPhase.Earthlit, SunsetTimeout, "the first night falls");
+            // The module came home a metre off the pad and the bank stands on it: 07 is beside the pad already.
+            yield return DriveTo(Flat(pad), 0.5f, "the pad", ApproachThrottle);
+            yield return UntilReached(OpeningMilestone.NightReady, "docked on the night-ready base: the nightfall begins");
+            Assert.IsTrue(_gameplay.DayEnd.Keep, "the pad keeps 07 through the nightfall");
+            bool leftEarly = false;
+            yield return Until(() =>
+            {
+                bool fallen = sunlight.Phase == SkyPhase.Earthlit;
+                leftEarly |= !fallen && !_gameplay.PadLock.Docked;
+                return fallen;
+            }, SunsetTimeout, "the first night falls");
+            Assert.IsFalse(leftEarly, "the night fell with 07 on the pad");
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => !_gameplay.DayEnd.Keep, battery.Cells * 6f, "the pad lets 07 go, full");
+            Assert.IsTrue(battery.CellsFull, "07 leaves the night's dock full");
             Capture("10-first-nightfall");
             End("B10: the first nightfall", "the base's lights over a dark basin");
         }

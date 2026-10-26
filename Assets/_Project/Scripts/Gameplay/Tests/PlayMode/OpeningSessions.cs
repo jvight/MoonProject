@@ -165,12 +165,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(opening.DuskBegun, "the first dock after power-on begins the first dusk");
             Assert.AreEqual(1, _dusk.Count, "published once");
             Assert.IsFalse(_dusk[0].Restored);
+            yield return Waits.Until(() => !_fixture.Gameplay.DayEnd.Keep, 30f);
+            Assert.IsFalse(_fixture.Gameplay.DayEnd.Keep, "the pad keeps 07 through the dusk until it is full");
             Assert.AreEqual(OpeningKeys.ScanModule, opening.Flow.Current, "night is coming: the power module");
 
+            yield return PlaceAt(GameplayFixture.SeismicStation);
             Build(StructureIds.BatteryBank, apron + new Vector3(-6f, 0f, 0f));
-            yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 3f);
-            Assert.IsTrue(Reached(OpeningMilestone.NightReady));
-            Assert.AreEqual(OpeningKeys.AwaitNight, opening.Flow.Current, "night-ready: the base waits");
+            yield return Waits.Until(() => opening.NightReady, 3f);
+            Assert.AreEqual(OpeningKeys.DockForNight, opening.Flow.Current, "night-ready off the pad: dock for the night");
+            Assert.IsFalse(Reached(OpeningMilestone.NightReady), "the night waits for the dock");
+            yield return PlaceAt(apron);
+            yield return Waits.Until(() => Reached(OpeningMilestone.NightReady), 5f);
+            Assert.IsTrue(Reached(OpeningMilestone.NightReady), "docked: the nightfall plays on the pad");
+            yield return null;
+            Assert.AreEqual(string.Empty, opening.Flow.Current, "the night falls with nothing said");
             _fixture.World.Phase = SkyPhase.Earthlit;
             yield return null;
             yield return null;
@@ -225,7 +233,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 int fragments = _fixture.Events.FragmentScanned.Count;
                 int metal = _fixture.Gameplay.Materials.Hold.Units(SalvageMaterial.Metal);
-                yield return Scan(scans.Find(StoryScan.IdPrefix + "airlock"));
+                yield return Read(scans.Find(StoryScan.IdPrefix + "airlock"));
                 Assert.AreEqual(1, stories.Count, "B7: the habitat's airlock panel reads out on the CRT");
                 Assert.AreEqual("story.airlock_panel", stories[0].TextKey);
                 Assert.AreEqual(fragments, _fixture.Events.FragmentScanned.Count, "a story is no blueprint fragment");
@@ -456,6 +464,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 yield return Scan(scans.Find(blueprintId + "." + i));
             }
+        }
+
+        /// <summary>A free read (payoff audit §3): 07 parks facing it, no E, and its words show.</summary>
+        private IEnumerator Read(ScanFragment fragment)
+        {
+            Assert.IsNotNull(fragment);
+            Assert.IsTrue(fragment.FreeRead, $"{fragment.FragmentId} is a free read");
+            Vector3 point = fragment.Point;
+            Vector3 park = point + Vector3.back * Park;
+            _fixture.Rover.Place(new Vector3(park.x, 0f, park.z), 0f);
+            _fixture.Rover.Aim(point + Vector3.back * (Park + 4f) + Vector3.up * 3f, point);
+            yield return Waits.Until(() => fragment.Scanned, _fixture.ScanTuning.FreeReadSeconds + PressTimeout);
+            Assert.IsTrue(fragment.Scanned, $"{fragment.FragmentId} is read by facing it, with no E");
         }
 
         private IEnumerator Scan(ScanFragment fragment)

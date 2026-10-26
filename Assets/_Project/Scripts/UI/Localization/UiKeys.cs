@@ -89,6 +89,9 @@ namespace MoonProject.UI
         public const string BuildHintPick = "build.hint.pick";
         public const string BuildHintLeave = "build.hint.leave";
         public const string BuildHintPlace = "build.hint.place";
+
+        /// <summary>"KESSLER–ARAI █░ · next: SSR-3 Headlamp": a maker's name, its bar and its next unlock.</summary>
+        public const string MakerBar = "ui.maker.bar";
         public const string BuildHintRotate = "build.hint.rotate";
         public const string BuildHintFixed = "build.hint.fixed";
         public const string BuildHintFixedTo = "build.hint.fixed_to";

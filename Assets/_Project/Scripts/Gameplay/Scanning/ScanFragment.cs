@@ -114,6 +114,12 @@ namespace MoonProject.Gameplay
         /// <summary>Metal a known blueprint's fragment still owes: it arrives once its dissolve is done.</summary>
         internal int Owed { get; set; }
 
+        /// <summary>A free read: no scan verb, read by standing facing it (see <see cref="StoryScan.FreeRead"/>).</summary>
+        public bool FreeRead { get; private set; }
+
+        /// <summary>Seconds 07 has stood facing this free read without a break.</summary>
+        internal float ReadSeconds { get; set; }
+
         /// <summary>Wraps a <c>Scan_1..N</c> node on an R1 ruin piece as a target of a structure set.</summary>
         /// <param name="surfaceRoot">The ruin (or crate) whose colliders the scan beam may land on.</param>
         public static ScanFragment ForRuinTarget(string fragmentId, string blueprintId,
@@ -129,7 +135,7 @@ namespace MoonProject.Gameplay
             Transform surfaceRoot)
         {
             return new ScanFragment(story.FragmentId, story.FragmentId, Array.Empty<string>(), 0, 1, story.Size,
-                hostId, target, surfaceRoot, story.TextKey);
+                hostId, target, surfaceRoot, story.TextKey) { FreeRead = story.FreeRead };
         }
 
         /// <summary>The sweep has climbed <paramref name="progress"/> (0..1) of it.</summary>

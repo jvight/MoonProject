@@ -24,7 +24,6 @@ Shader "MoonProject/World/R1Terrain"
         _OcclusionStrength("Micro-Cavity AO Strength", Range(0.0, 1.0)) = 0.68
         _SlopeThreshold("Steep Slope Threshold (Normal Y)", Range(0.3, 0.98)) = 0.88
         _SlopeBlendRange("Steep Slope Blend Width", Range(0.02, 0.4)) = 0.10
-        [HideInInspector] _LegacyBandedRim("Legacy Banded Rim (Before Proof)", Float) = 0.0
     }
 
     SubShader
@@ -93,7 +92,6 @@ Shader "MoonProject/World/R1Terrain"
                 half _OcclusionStrength;
                 half _SlopeThreshold;
                 half _SlopeBlendRange;
-                half _LegacyBandedRim;
             CBUFFER_END
 
             // Power overlay reach ring set globally while the player holds a cable or build preview.
@@ -489,68 +487,6 @@ Shader "MoonProject/World/R1Terrain"
                 return 1.0h + level * (half)(_MoonBlastHalo.x * halo + _MoonBlastRays.x * ray * share);
             }
 
-            // Legacy 2x2 ledge helper retained only for the Before/After proof sheet (_LegacyBandedRim >= 0.5).
-            void AccumulateBrokenRockLedges2x2(
-                float2 ledgeCoord,
-                float2 wpRot,
-                float occupancy,
-                inout half scarpFaceOut,
-                inout half ledgeLipOut,
-                inout half creviceOut)
-            {
-                float2 startCell = floor(ledgeCoord - 0.5);
-                [unroll]
-                for (int iy = 0; iy <= 1; iy++)
-                {
-                    [unroll]
-                    for (int ix = 0; ix <= 1; ix++)
-                    {
-                        float2 cell = startCell + float2(ix, iy);
-                        float3 h = Hash23(cell);
-                        if (h.z >= occupancy)
-                        {
-                            continue;
-                        }
-
-                        float2 jitter = float2(frac(h.x * 13.37 + h.y * 5.19), frac(h.y * 17.73 + h.z * 9.41)) - 0.5;
-                        float2 center = cell + 0.5 + jitter * float2(0.72, 0.80);
-                        float2 d = ledgeCoord - center;
-
-                        float tilt = (h.x - 0.5) * 0.30;
-                        float cragA = BlastNoise(wpRot * 0.22 + cell * 3.7) - 0.5;
-                        float cragB = BlastNoise(wpRot * 0.55 + cell * 7.3) - 0.5;
-                        float2 dTilted = float2(d.x + cragA * 0.08, d.y + d.x * tilt + cragA * 0.12 + cragB * 0.08);
-
-                        float radX = lerp(0.22, 0.42, frac(h.y * 9.3));
-                        float uX = dTilted.x / radX;
-                        if (abs(uX) >= 1.0)
-                        {
-                            continue;
-                        }
-
-                        float envX = saturate((1.0 - abs(uX)) * 2.6);
-                        float jointWave = abs(frac(uX * lerp(1.2, 2.2, h.z) + h.x * 3.1 + cragB * 0.35) - 0.5);
-                        half jointBreak = (half)smoothstep(0.05, 0.14, jointWave);
-
-                        float radY = lerp(0.14, 0.26, frac(h.x * 11.7));
-                        float localHalfY = radY * (0.45 + 0.55 * envX);
-                        float uY = dTilted.y / max(localHalfY, 1e-3);
-                        if (abs(uY) >= 1.25)
-                        {
-                            continue;
-                        }
-
-                        half lip = (half)(smoothstep(0.05, 0.38, uY) * (1.0 - smoothstep(0.55, 1.05, uY)) * envX) * jointBreak;
-                        half scarp = (half)(smoothstep(-0.95, -0.35, uY) * (1.0 - smoothstep(0.05, 0.45, uY)) * envX) * jointBreak;
-                        half jointCrevice = (half)(smoothstep(-0.60, 0.20, uY) * (1.0 - smoothstep(0.20, 0.70, uY)) * envX) * (1.0h - jointBreak);
-
-                        scarpFaceOut = max(scarpFaceOut, scarp);
-                        ledgeLipOut = max(ledgeLipOut, lip);
-                        creviceOut = max(creviceOut, jointCrevice);
-                    }
-                }
-            }
-
             // Samples one 2D projection plane of the regolith detail maps with rotated dual-scale anti-tiling.
             void SampleRegolithPlane(
                 float2 p2,
@@ -653,9 +589,6 @@ Shader "MoonProject/World/R1Terrain"
                 float n130 = BlastNoise(float2(pMed.x * 0.0086, pMed.y * 0.0106) + float2(19.6, 8.3));
                 // Scale 3 (~55–75 m): smaller organic ejecta lobes and mare bays
                 float n65 = BlastNoise(float2(pSmall.x * 0.0165, pSmall.y * 0.0205) + float2(7.2, 34.1));
-                // Scale 4 (~420 m): broad mountain/backdrop tonal variation surviving past 1 km
-                float n420 = BlastNoise(wp * 0.0024 + float2(7.8, 43.1));
-
                 float rawField = (n260 - 0.50) * 0.48 + (n130 - 0.50) * 0.36 + (n65 - 0.50) * 0.28;
                 float patch01 = smoothstep(-0.135, 0.135, rawField);
 
@@ -663,22 +596,16 @@ Shader "MoonProject/World/R1Terrain"
                 float floorPatchMod = lerp(0.75, 1.23, patch01);
 
                 float mountainMod;
-                if (_LegacyBandedRim >= 0.5h)
-                {
-                    mountainMod = 1.0 + (n420 - 0.5) * 0.14 + saturate(wp3.y / 115.0) * 0.06;
-                }
-                else
-                {
-                    // True 3D domain-warped macro noise across crater-rim massifs (zero horizontal banding or XZ stretching)
-                    float3 warp3D = float3(
-                        RimNoise3D(wp3 * 0.0085 + float3(5.2, 17.9, 11.4)) - 0.5,
-                        RimNoise3D(wp3 * 0.0085 + float3(31.7, 8.3, 23.1)) - 0.5,
-                        RimNoise3D(wp3 * 0.0085 + float3(19.4, 43.2, 3.8)) - 0.5) * 32.0;
-                    float rimBroad3D = RimFbm3D((wp3 + warp3D) * 0.0135);
-                    float rimMed3D   = RimFbm3D((wp3 - warp3D * 0.60) * 0.0340 + float3(17.3, 9.1, 41.6));
-                    float rimMacro01 = smoothstep(0.22, 0.78, rimBroad3D * 0.62 + rimMed3D * 0.38);
-                    mountainMod = lerp(0.88, 1.15, rimMacro01);
-                }
+                // True 3D domain-warped macro noise across crater-rim massifs (zero horizontal banding or XZ stretching)
+                float3 warp3D = float3(
+                    RimNoise3D(wp3 * 0.0085 + float3(5.2, 17.9, 11.4)) - 0.5,
+                    RimNoise3D(wp3 * 0.0085 + float3(31.7, 8.3, 23.1)) - 0.5,
+                    RimNoise3D(wp3 * 0.0085 + float3(19.4, 43.2, 3.8)) - 0.5) * 32.0;
+                float rimBroad3D = RimFbm3D((wp3 + warp3D) * 0.0135);
+                float rimMed3D   = RimFbm3D((wp3 - warp3D * 0.60) * 0.0340 + float3(17.3, 9.1, 41.6));
+                float rimMacro01 = smoothstep(0.22, 0.78, rimBroad3D * 0.62 + rimMed3D * 0.38);
+                mountainMod = lerp(0.88, 1.15, rimMacro01);
+
 
                 half patchScalar = (half)clamp(lerp(floorPatchMod, mountainMod, slopeFactor * 0.82), 0.75, 1.24);
 
@@ -794,17 +721,13 @@ Shader "MoonProject/World/R1Terrain"
 
                 // In Earthlight / eclipse (sunlit == 0), keep soft clod/dimple relief and slope forms readable.
                 half earthWrap = saturate(ndotl * 0.84h + 0.16h);
-                half earthReliefGain = _LegacyBandedRim >= 0.5h
-                    ? lerp(0.42h + 0.38h * regolithShadowWeight, 1.55h, slopeFactor)
-                    : lerp(0.42h + 0.38h * regolithShadowWeight, 0.78h, slopeFactor);
+                half earthReliefGain = lerp(0.42h + 0.38h * regolithShadowWeight, 0.78h, slopeFactor);
                 half earthRelief = clamp(deltaNdotL * earthReliefGain, -0.32h, 0.38h);
                 half earthDiffuse = saturate(pow(earthWrap, 1.10h) * 1.05h + earthRelief);
 
                 // Soft R1 stylized-realism terminator across both plain and regolith-mantled slopes (no harsh binary step bands).
                 half plainKnee = smoothstep(-0.065h, 0.175h, ndotl);
-                half slopeKnee = _LegacyBandedRim >= 0.5h
-                    ? smoothstep(-0.006h, 0.032h, ndotl)
-                    : smoothstep(-0.048h, 0.145h, ndotl);
+                half slopeKnee = smoothstep(-0.048h, 0.145h, ndotl);
                 half terminatorKnee = lerp(plainKnee, slopeKnee, slopeFactor);
                 half grazingContrast = pow(saturate(ndotl + lerp(0.038h, 0.022h, slopeFactor)), 1.04h) * terminatorKnee;
 
@@ -820,9 +743,7 @@ Shader "MoonProject/World/R1Terrain"
 
                 half highlandDiffuse = lerp(earthDiffuse, sunDiffuse, sunlit);
 
-                half sunStep = _LegacyBandedRim >= 0.5h
-                    ? lerp(smoothstep(-0.050h, 0.165h, ndotl), smoothstep(0.001h, 0.034h, ndotl), slopeFactor)
-                    : lerp(smoothstep(-0.050h, 0.165h, ndotl), smoothstep(-0.038h, 0.140h, ndotl), slopeFactor);
+                half sunStep = lerp(smoothstep(-0.050h, 0.165h, ndotl), smoothstep(-0.038h, 0.140h, ndotl), slopeFactor);
                 half earthStep = smoothstep(0.02h, 0.12h, earthWrap);
                 half terminatorStep = lerp(earthStep, sunStep, sunlit);
                 half rampInput = lerp(earthWrap, saturate(ndotl + lerp(0.025h, 0.015h, slopeFactor)), sunlit);
@@ -887,30 +808,21 @@ Shader "MoonProject/World/R1Terrain"
 
                 // Slope masks: gentle/moderate slopes (25-35 deg) hold regolith-mantled grey; only the steepest parts expose darker fresh rock.
                 half slopeFactor = (1.0h - (half)smoothstep(0.74h, 0.945h, geomNormalWS.y)) * mountainMask;
-                half steepFaceMask = (1.0h - (half)smoothstep(0.68h, 0.855h, geomNormalWS.y)) * mountainMask;
-                half gentleSlopeMask = (half)smoothstep(0.80h, 0.92h, geomNormalWS.y);
 
                 // Neutral cool grey lunar regolith base reflectance (~0.12-0.16 linear).
                 // Preserve home-pad and Kestrel-scorch vertex darkening on the basin floor, while suppressing periodic
-                // elevation vertex-color terrace bands on crater-rim slopes (unless _LegacyBandedRim >= 0.5 for proof).
+                // elevation vertex-color terrace bands on crater-rim slopes.
                 half3 vertexLinear = SRGBToLinear(input.color.rgb) * _BaseColor.rgb;
                 half vLuma = dot(vertexLinear, half3(0.2126h, 0.7152h, 0.0722h));
                 half padOrScorchWeight = max(
                     (half)(1.0 - smoothstep(18.0, 32.0, length(input.positionWS.xz))),
                     (half)(1.0 - smoothstep(8.0, 16.0, length(input.positionWS.xz - float2(-12.0, 16.0))))) * (1.0h - slopeGeomMask);
                 half vNorm;
-                if (_LegacyBandedRim >= 0.5h)
-                {
-                    half vertexToneWeight = max(padOrScorchWeight, mountainMask);
-                    vNorm = lerp(0.66h, smoothstep(0.025h, 0.22h, vLuma), vertexToneWeight);
-                }
-                else
-                {
-                    half floorVNorm = lerp(0.66h, smoothstep(0.025h, 0.22h, vLuma), padOrScorchWeight);
-                    // Cohesive regolith-mantled highland grey on rim slopes (zero 22 m vertex-color horizontal stripe bands)
-                    half rimMantleVNorm = lerp(0.76h, smoothstep(0.025h, 0.22h, vLuma), 0.10h * (1.0h - slopeFactor));
-                    vNorm = lerp(floorVNorm, rimMantleVNorm, mountainMask * (1.0h - padOrScorchWeight));
-                }
+                half floorVNorm = lerp(0.66h, smoothstep(0.025h, 0.22h, vLuma), padOrScorchWeight);
+                // Cohesive regolith-mantled highland grey on rim slopes (zero 22 m vertex-color horizontal stripe bands)
+                half rimMantleVNorm = lerp(0.76h, smoothstep(0.025h, 0.22h, vLuma), 0.10h * (1.0h - slopeFactor));
+                vNorm = lerp(floorVNorm, rimMantleVNorm, mountainMask * (1.0h - padOrScorchWeight));
+
 
                 half lunarReflectance = lerp(0.118h, 0.160h, vNorm);
 
@@ -932,7 +844,7 @@ Shader "MoonProject/World/R1Terrain"
                 half clodProminence = 0.0h;
 
                 // Singularity-free world-space tangent frame for any slope or vertical wall orientation.
-                half3 refAxis = (_LegacyBandedRim < 0.5h && abs(geomNormalWS.x) > 0.82h)
+                half3 refAxis = (abs(geomNormalWS.x) > 0.82h)
                     ? half3(0.0h, 0.0h, 1.0h)
                     : half3(1.0h, 0.0h, 0.0h);
                 half3 tangentWS = normalize(refAxis - geomNormalWS * dot(geomNormalWS, refAxis));
@@ -943,7 +855,7 @@ Shader "MoonProject/World/R1Terrain"
                 microAo = min(microAo, weatheredCraters.w);
 
                 // Slope geological structure:
-                // - Default (_LegacyBandedRim < 0.5): Triplanar / 3D world-space crater-rim slope material inspired by
+                // - Triplanar / 3D world-space crater-rim slope material inspired by
                 //   Apollo / LRO oblique photos of Tycho, Copernicus, and Shackleton rims:
                 //   * Regolith-mantled grey across 25–35 deg slopes, rounded shoulders, and talus aprons.
                 //   * Subtle darker fresh-rock exposures ONLY on the steepest parts (steep scarps & near-vertical faces),
@@ -953,163 +865,95 @@ Shader "MoonProject/World/R1Terrain"
                 {
                     float3 wp3 = input.positionWS;
 
-                    if (_LegacyBandedRim >= 0.5h)
-                    {
-                        float2 wp2 = wp3.xz;
-                        float2 wpRot1 = float2(wp2.x * 0.8192 - wp2.y * 0.5736, wp2.x * 0.5736 + wp2.y * 0.8192);
-                        float2 wpRot2 = float2(wp2.x * 0.5299 + wp2.y * 0.8480, -wp2.x * 0.8480 + wp2.y * 0.5299);
+                    // 1. Tightened triplanar weights from world-space geometry normal (zero UV stretching on steep faces)
+                    half3 blendWeights = abs(geomNormalWS);
+                    blendWeights = pow(max(blendWeights, 0.0001h), 4.0h);
+                    blendWeights /= max(blendWeights.x + blendWeights.y + blendWeights.z, 1e-4h);
 
-                        float radialAngle = atan2(wp2.x, wp2.y);
-                        float chuteAzimuth = radialAngle * 24.0
-                            + (BlastNoise(wpRot1 * 0.016 + float2(7.1, 19.3)) - 0.5) * 3.6
-                            + (BlastNoise(wpRot2 * 0.038 + float2(13.4, 5.8)) - 0.5) * 1.6;
-                        float chuteNoise = BlastNoise(float2(chuteAzimuth, wp3.y * 0.012 + 3.7)) * 0.62
-                            + BlastNoise(float2(chuteAzimuth * 2.1 + 11.4, wp3.y * 0.028)) * 0.38;
-                        half talusChute = (half)smoothstep(0.42, 0.70, chuteNoise);
+                    // 2. 3D isotropic domain-warped coordinates in world metres (zero horizontal stratification)
+                    float3 warp3 = float3(
+                        RimNoise3D(wp3 * 0.016 + float3(11.3, 27.9, 5.4)) - 0.5,
+                        RimNoise3D(wp3 * 0.016 + float3(41.8, 7.2, 19.6)) - 0.5,
+                        RimNoise3D(wp3 * 0.016 + float3(23.5, 15.1, 37.8)) - 0.5) * 16.0;
+                    float3 pWarped = wp3 + warp3;
 
-                        float patchNoise = BlastNoise(wpRot1 * 0.030 + float2(wp3.y * 0.024, 11.7)) * 0.60
-                                         + BlastNoise(wpRot2 * 0.072 + float2(19.3, wp3.y * 0.052)) * 0.40;
-                        half rockPatch = (half)smoothstep(0.34, 0.64, patchNoise);
+                    // Broad 3D regolith mantle variation across rounded shoulders and talus aprons (~45-120 m lobes)
+                    float mantleNoise3D = RimFbm3D(pWarped * 0.024);
+                    half mantlePatch = (half)smoothstep(0.22, 0.78, mantleNoise3D);
 
-                        half strataDistFade = 1.0h - (half)smoothstep(220.0, 520.0, camDist);
-                        float faultBroad = (BlastNoise(wpRot1 * 0.012 + float2(13.7, 29.3)) - 0.5) * 14.0;
-                        float faultMid = (BlastNoise(wpRot2 * 0.028 + float2(41.9, 7.1)) - 0.5) * 5.8;
-                        float yBeddingBase = wp3.y + wp3.x * 0.04 - wp3.z * 0.03 + faultBroad * 0.15 + faultMid * 0.15;
+                    // Medium 3D bedrock outcrop selector (~15-35 m isotropic 3D patches, never horizontal bands)
+                    float outcropNoise3D = RimFbm3D(pWarped * 0.062 + float3(19.7, 33.4, 7.9));
+                    half outcropPatch = (half)smoothstep(0.30, 0.74, outcropNoise3D);
 
-                        float ledgeOccupancy = lerp(0.42, 0.82, saturate((float)rockPatch * 0.65 + (float)steepFaceMask * 0.55));
+                    // Fine 3D breccia/basalt texture variation (~4-9 m)
+                    float detailNoise3D = RimFbm3D(wp3 * 0.18 + warp3 * 0.20 + float3(7.1, 53.2, 29.4));
 
-                        half majScarp = 0.0h, majLip = 0.0h, majCrevice = 0.0h;
-                        AccumulateBrokenRockLedges2x2(
-                            float2(wpRot1.x * 0.018, yBeddingBase * 0.22),
-                            wpRot1,
-                            ledgeOccupancy,
-                            majScarp, majLip, majCrevice);
+                    // 3. Steepest-parts-only fresh-rock exposure mask:
+                    //    - On 25-35 deg slopes (geomNormalWS.y in 0.819..0.906), steepestSlopeMask is 0 -> regolith-mantled grey!
+                    //    - Above ~43 deg (geomNormalWS.y < 0.73), ramping strongly toward 65-88 deg near-vertical faces
+                    //      (geomNormalWS.y < 0.42), fresh-rock exposures emerge in organic 3D patches.
+                    half steepestSlopeMask = 1.0h - (half)smoothstep(0.24h, 0.73h, geomNormalWS.y);
+                    half upperShoulderPeek = (1.0h - (half)smoothstep(0.70h, 0.83h, geomNormalWS.y))
+                        * (half)smoothstep(0.68, 0.90, outcropNoise3D) * 0.16h;
+                    half exposedFreshRockMask = saturate(
+                        (steepestSlopeMask * (0.46h + 0.54h * outcropPatch) + upperShoulderPeek)
+                        * hillDetailWeight);
 
-                        half minScarp = 0.0h, minLip = 0.0h, minCrevice = 0.0h;
-                        AccumulateBrokenRockLedges2x2(
-                            float2(wpRot2.x * 0.028 + 19.7, yBeddingBase * 0.38 + 7.3),
-                            wpRot2,
-                            ledgeOccupancy * 0.92,
-                            minScarp, minLip, minCrevice);
+                    // 4. Triplanar basalt rock texture + normal map on steep fresh-rock exposures
+                    float3 rockCoord = (wp3 + warp3 * 0.12) * _RockTiling;
+                    half3 rockAlbX = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.zy).rgb;
+                    half3 rockAlbY = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.xz).rgb;
+                    half3 rockAlbZ = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.xy).rgb;
+                    half3 rockTexAlbedo = rockAlbX * blendWeights.x + rockAlbY * blendWeights.y + rockAlbZ * blendWeights.z;
+                    half rockTexLuma = dot(rockTexAlbedo, half3(0.2126h, 0.7152h, 0.0722h));
+                    half rockTexDetail = clamp(rockTexLuma / 0.48h, 0.82h, 1.18h);
 
-                        half periodicBand = (half)smoothstep(0.20, 0.80, 0.5 + 0.5 * sin(wp3.y * 1.15));
-                        half minorWeight = strataDistFade * 0.85h;
-                        half ledgeSlopeGate = (half)smoothstep(0.08, 0.38, slopeFactor);
+                    half rockBumpScale = _RockBumpScale * (0.22h + 0.78h * exposedFreshRockMask) * hillDetailWeight;
+                    half3 rockNormX = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.zy), rockBumpScale);
+                    half3 rockNormY = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.xz), rockBumpScale);
+                    half3 rockNormZ = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.xy), rockBumpScale);
+                    half3 triplanarRockNormalWS =
+                        half3(0.0h, rockNormX.y, rockNormX.x) * blendWeights.x +
+                        half3(rockNormY.x, 0.0h, rockNormY.y) * blendWeights.y +
+                        half3(rockNormZ.x, rockNormZ.y, 0.0h) * blendWeights.z;
+                    triplanarRockNormalWS -= geomNormalWS * dot(triplanarRockNormalWS, geomNormalWS);
 
-                        half terraceRiser = saturate(majScarp + minScarp * minorWeight + periodicBand * 0.65h) * ledgeSlopeGate;
-                        half terraceBench = saturate(majLip + minLip * minorWeight + (1.0h - periodicBand) * 0.55h) * ledgeSlopeGate;
-                        half rockJoint = saturate(majCrevice + minCrevice * minorWeight) * ledgeSlopeGate;
+                    // 5. Isotropic 3D world-space normal relief (soft pillowed regolith slumps on 25-35 deg slopes,
+                    //    crisper 3D fractured rock facets on steep fresh-rock exposures, zero horizontal slab lines)
+                    float eps3 = 0.55;
+                    float3 nPos = wp3 * 0.14 + warp3 * 0.18;
+                    float h0 = RimFbm3D(nPos);
+                    float hx = RimFbm3D(nPos + float3(eps3 * 0.14, 0.0, 0.0));
+                    float hy = RimFbm3D(nPos + float3(0.0, eps3 * 0.14, 0.0));
+                    float hz = RimFbm3D(nPos + float3(0.0, 0.0, eps3 * 0.14));
+                    half3 grad3D = half3((half)(hx - h0), (half)(hy - h0), (half)(hz - h0));
+                    grad3D -= geomNormalWS * dot(grad3D, geomNormalWS);
 
-                        half exposedRockMask = saturate((steepFaceMask * 0.85h + terraceRiser * 0.90h) * hillDetailWeight);
-                        half gentleRegolithMask = saturate(gentleSlopeMask * (1.0h - exposedRockMask * 0.86h) * hillDetailWeight);
+                    half reliefStrength = lerp(1.05h, 2.95h, exposedFreshRockMask) * slopeFactor * hillDetailWeight;
+                    normalWS = normalize(geomNormalWS + grad3D * reliefStrength + triplanarRockNormalWS * 0.78h);
 
-                        half3 horizOutward = SafeNormalize(float3(geomNormalWS.x, 0.0, geomNormalWS.z));
-                        half3 ledgeNormalOffset = (
-                            horizOutward * (terraceRiser * 0.95h - terraceBench * 0.45h) +
-                            half3(0.0h, terraceBench * 0.95h - terraceRiser * 0.75h, 0.0h)
-                        ) * (saturate(slopeFactor * 1.45h) * hillDetailWeight);
+                    // 6. Tonal balance:
+                    //    - Regolith-mantled grey on 25-35 deg slopes (soft macro variation 0.94..1.09)
+                    //    - Subtle darker fresh-rock exposures only on the steepest parts (0.56..0.72 of mantled grey)
+                    half mantledGreyMod = lerp(0.94h, 1.09h, mantlePatch) * lerp(0.97h, 1.03h, (half)detailNoise3D);
+                    half freshRockMod = lerp(0.56h, 0.72h, saturate(rockTexDetail * 0.55h + (half)detailNoise3D * 0.45h));
+                    half slopeAlbedoMod = lerp(mantledGreyMod, freshRockMod, exposedFreshRockMask);
 
-                        half slopeAlbedoMod = 1.0h;
-                        slopeAlbedoMod = lerp(slopeAlbedoMod, 1.22h, gentleRegolithMask);
-                        slopeAlbedoMod = lerp(slopeAlbedoMod, 0.52h, exposedRockMask);
-                        slopeAlbedoMod = lerp(slopeAlbedoMod, 0.48h, terraceRiser);
-                        slopeAlbedoMod = lerp(slopeAlbedoMod, 1.24h, terraceBench * 0.85h);
+                    // Subtle cool-slate basaltic-anorthosite tint on fresh-rock exposures
+                    half3 freshRockTint = lerp(
+                        half3(1.0h, 1.0h, 1.0h),
+                        half3(0.965h, 0.990h, 1.020h),
+                        exposedFreshRockMask * 0.65h);
 
-                        normalWS = normalize(geomNormalWS + ledgeNormalOffset);
-                        baseAlbedo *= slopeAlbedoMod;
-                        microAo = min(microAo, lerp(1.0h, 0.68h, terraceRiser * 0.70h + rockJoint * 0.50h));
-                    }
-                    else
-                    {
-                        // 1. Tightened triplanar weights from world-space geometry normal (zero UV stretching on steep faces)
-                        half3 blendWeights = abs(geomNormalWS);
-                        blendWeights = pow(max(blendWeights, 0.0001h), 4.0h);
-                        blendWeights /= max(blendWeights.x + blendWeights.y + blendWeights.z, 1e-4h);
+                    half3 dNdx = ddx(geomNormalWS);
+                    half3 dNdy = ddy(geomNormalWS);
+                    half geomCurvature = saturate((length(dNdx) + length(dNdy)) * 14.0h);
+                    ridgeCrestMask = saturate(geomCurvature * 0.45h * slopeFactor) * hillDetailWeight;
 
-                        // 2. 3D isotropic domain-warped coordinates in world metres (zero horizontal stratification)
-                        float3 warp3 = float3(
-                            RimNoise3D(wp3 * 0.016 + float3(11.3, 27.9, 5.4)) - 0.5,
-                            RimNoise3D(wp3 * 0.016 + float3(41.8, 7.2, 19.6)) - 0.5,
-                            RimNoise3D(wp3 * 0.016 + float3(23.5, 15.1, 37.8)) - 0.5) * 16.0;
-                        float3 pWarped = wp3 + warp3;
+                    baseAlbedo *= lerp(1.0h, slopeAlbedoMod, slopeFactor * hillDetailWeight) * freshRockTint;
+                    microAo = min(microAo, lerp(1.0h, 0.84h, exposedFreshRockMask * (1.0h - (half)detailNoise3D * 0.45h)));
+                    smoothness = max(smoothness, exposedFreshRockMask * 0.065h);
 
-                        // Broad 3D regolith mantle variation across rounded shoulders and talus aprons (~45-120 m lobes)
-                        float mantleNoise3D = RimFbm3D(pWarped * 0.024);
-                        half mantlePatch = (half)smoothstep(0.22, 0.78, mantleNoise3D);
-
-                        // Medium 3D bedrock outcrop selector (~15-35 m isotropic 3D patches, never horizontal bands)
-                        float outcropNoise3D = RimFbm3D(pWarped * 0.062 + float3(19.7, 33.4, 7.9));
-                        half outcropPatch = (half)smoothstep(0.30, 0.74, outcropNoise3D);
-
-                        // Fine 3D breccia/basalt texture variation (~4-9 m)
-                        float detailNoise3D = RimFbm3D(wp3 * 0.18 + warp3 * 0.20 + float3(7.1, 53.2, 29.4));
-
-                        // 3. Steepest-parts-only fresh-rock exposure mask:
-                        //    - On 25-35 deg slopes (geomNormalWS.y in 0.819..0.906), steepestSlopeMask is 0 -> regolith-mantled grey!
-                        //    - Above ~43 deg (geomNormalWS.y < 0.73), ramping strongly toward 65-88 deg near-vertical faces
-                        //      (geomNormalWS.y < 0.42), fresh-rock exposures emerge in organic 3D patches.
-                        half steepestSlopeMask = 1.0h - (half)smoothstep(0.24h, 0.73h, geomNormalWS.y);
-                        half upperShoulderPeek = (1.0h - (half)smoothstep(0.70h, 0.83h, geomNormalWS.y))
-                            * (half)smoothstep(0.68, 0.90, outcropNoise3D) * 0.16h;
-                        half exposedFreshRockMask = saturate(
-                            (steepestSlopeMask * (0.46h + 0.54h * outcropPatch) + upperShoulderPeek)
-                            * hillDetailWeight);
-
-                        // 4. Triplanar basalt rock texture + normal map on steep fresh-rock exposures
-                        float3 rockCoord = (wp3 + warp3 * 0.12) * _RockTiling;
-                        half3 rockAlbX = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.zy).rgb;
-                        half3 rockAlbY = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.xz).rgb;
-                        half3 rockAlbZ = SAMPLE_TEXTURE2D(_RockMap, sampler_RockMap, rockCoord.xy).rgb;
-                        half3 rockTexAlbedo = rockAlbX * blendWeights.x + rockAlbY * blendWeights.y + rockAlbZ * blendWeights.z;
-                        half rockTexLuma = dot(rockTexAlbedo, half3(0.2126h, 0.7152h, 0.0722h));
-                        half rockTexDetail = clamp(rockTexLuma / 0.48h, 0.82h, 1.18h);
-
-                        half rockBumpScale = _RockBumpScale * (0.22h + 0.78h * exposedFreshRockMask) * hillDetailWeight;
-                        half3 rockNormX = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.zy), rockBumpScale);
-                        half3 rockNormY = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.xz), rockBumpScale);
-                        half3 rockNormZ = UnpackNormalScale(SAMPLE_TEXTURE2D(_RockBumpMap, sampler_RockBumpMap, rockCoord.xy), rockBumpScale);
-                        half3 triplanarRockNormalWS =
-                            half3(0.0h, rockNormX.y, rockNormX.x) * blendWeights.x +
-                            half3(rockNormY.x, 0.0h, rockNormY.y) * blendWeights.y +
-                            half3(rockNormZ.x, rockNormZ.y, 0.0h) * blendWeights.z;
-                        triplanarRockNormalWS -= geomNormalWS * dot(triplanarRockNormalWS, geomNormalWS);
-
-                        // 5. Isotropic 3D world-space normal relief (soft pillowed regolith slumps on 25-35 deg slopes,
-                        //    crisper 3D fractured rock facets on steep fresh-rock exposures, zero horizontal slab lines)
-                        float eps3 = 0.55;
-                        float3 nPos = wp3 * 0.14 + warp3 * 0.18;
-                        float h0 = RimFbm3D(nPos);
-                        float hx = RimFbm3D(nPos + float3(eps3 * 0.14, 0.0, 0.0));
-                        float hy = RimFbm3D(nPos + float3(0.0, eps3 * 0.14, 0.0));
-                        float hz = RimFbm3D(nPos + float3(0.0, 0.0, eps3 * 0.14));
-                        half3 grad3D = half3((half)(hx - h0), (half)(hy - h0), (half)(hz - h0));
-                        grad3D -= geomNormalWS * dot(grad3D, geomNormalWS);
-
-                        half reliefStrength = lerp(1.05h, 2.95h, exposedFreshRockMask) * slopeFactor * hillDetailWeight;
-                        normalWS = normalize(geomNormalWS + grad3D * reliefStrength + triplanarRockNormalWS * 0.78h);
-
-                        // 6. Tonal balance:
-                        //    - Regolith-mantled grey on 25-35 deg slopes (soft macro variation 0.94..1.09)
-                        //    - Subtle darker fresh-rock exposures only on the steepest parts (0.56..0.72 of mantled grey)
-                        half mantledGreyMod = lerp(0.94h, 1.09h, mantlePatch) * lerp(0.97h, 1.03h, (half)detailNoise3D);
-                        half freshRockMod = lerp(0.56h, 0.72h, saturate(rockTexDetail * 0.55h + (half)detailNoise3D * 0.45h));
-                        half slopeAlbedoMod = lerp(mantledGreyMod, freshRockMod, exposedFreshRockMask);
-
-                        // Subtle cool-slate basaltic-anorthosite tint on fresh-rock exposures
-                        half3 freshRockTint = lerp(
-                            half3(1.0h, 1.0h, 1.0h),
-                            half3(0.965h, 0.990h, 1.020h),
-                            exposedFreshRockMask * 0.65h);
-
-                        half3 dNdx = ddx(geomNormalWS);
-                        half3 dNdy = ddy(geomNormalWS);
-                        half geomCurvature = saturate((length(dNdx) + length(dNdy)) * 14.0h);
-                        ridgeCrestMask = saturate(geomCurvature * 0.45h * slopeFactor) * hillDetailWeight;
-
-                        baseAlbedo *= lerp(1.0h, slopeAlbedoMod, slopeFactor * hillDetailWeight) * freshRockTint;
-                        microAo = min(microAo, lerp(1.0h, 0.84h, exposedFreshRockMask * (1.0h - (half)detailNoise3D * 0.45h)));
-                        smoothness = max(smoothness, exposedFreshRockMask * 0.065h);
-                    }
                 }
 
                 // Multi-scale powdery regolith: rounded soft clods, soft-edged dust-filled dimples, and fine isotropic sand/powder grain
@@ -1157,7 +1001,7 @@ Shader "MoonProject/World/R1Terrain"
                     microAo = min(microAo, tyreRuts.w);
 
                     // Damp planar XZ disturbance on steep faces when triplanar slope mapping is active
-                    half planarWeight = (_LegacyBandedRim >= 0.5h) ? 1.0h : saturate(geomNormalWS.y * geomNormalWS.y);
+                    half planarWeight = saturate(geomNormalWS.y * geomNormalWS.y);
                     half2 distNormalXY = (organicGrainXY + (midRotA + midRotB) * 0.32h
                         + weatheredCraters.xy + tyreRuts.xy * (1.0h - slopeFactor * 0.45h)) * planarWeight;
 
@@ -1256,7 +1100,7 @@ Shader "MoonProject/World/R1Terrain"
                         half4 maskCombined = lerp(maskMed, maskFine, 0.50h);
 
                         // On slopes & vertical faces, blend in world-space triplanar regolith so UVs never stretch vertically
-                        half triSlopeBlend = (_LegacyBandedRim >= 0.5h) ? 0.0h : saturate(slopeFactor * 1.15h);
+                        half triSlopeBlend = saturate(slopeFactor * 1.15h);
                         half3 triNormalOffsetWS = half3(0.0h, 0.0h, 0.0h);
                         if (triSlopeBlend > 0.01h)
                         {

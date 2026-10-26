@@ -91,7 +91,7 @@ namespace MoonProject.Gameplay.Tests
             _game.ModuleHome = true;
             Expect(OpeningKeys.BuildBatteryBank, "home: build the bank on it");
             _game.NightReady = true;
-            Expect(OpeningKeys.AwaitNight, "night-ready: the base waits for the night");
+            Expect(OpeningKeys.DockForNight, "night-ready: dock on the pad for the night");
             _game.NightFallen = true;
             Expect(OpeningKeys.ScanTower);
             _game.Known.Add(StructureIds.AntennaMast);
@@ -105,15 +105,7 @@ namespace MoonProject.Gameplay.Tests
             _game.AtRelay = true;
             Expect(string.Empty, "at relay.1: its cabinet's and socket's chips lead");
             _game.RelayRelit = true;
-            Expect(OpeningKeys.ScanElder06, "relay.1 lit: 06 at relay.2 is next");
-            _game.HeadlampUnlocked = true;
-            Expect(OpeningKeys.CutHeadlampCrate, "Kessler–Arai understood: 06's crate holds the headlamp's parts");
-            _game.CoversHeadlamp = true;
-            Expect(OpeningKeys.DockForRack, "the hold covers the headlamp, the rack not out yet: dock to bring it out");
-            _game.RackOut = true;
-            Expect(OpeningKeys.AssembleHeadlamp, "the rack stands out: the headlamp at its bay");
-            _game.HeadlampFitted = true;
-            Expect(string.Empty, "the headlamp fitted: the opening's lines are done");
+            Expect(string.Empty, "relay.1 lit: the opening's lines are done; 06 and the headlamp are a pull, no line");
         }
 
         [Test]
@@ -161,12 +153,6 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
             _game.RelayRelit = true;
-            _flow.Tick();
-            Assert.AreEqual(OpeningSteps.ScanElder06, _flow.CurrentIndex);
-            _game.HeadlampUnlocked = true;
-            _flow.Tick();
-            Assert.AreEqual(OpeningSteps.AssembleHeadlamp, _flow.CurrentIndex);
-            _game.HeadlampFitted = true;
             _flow.Tick();
             Assert.AreEqual(OpeningSteps.Count, _flow.CurrentIndex, "the index is the step count once the opening is over");
         }
@@ -232,6 +218,36 @@ namespace MoonProject.Gameplay.Tests
             CollectionAssert.DoesNotContain(_lines, OpeningKeys.FitIgniter);
         }
 
+        [Test]
+        public void ShortOfTheRelayTrip_TheLineSendsToThePadFirst_KeyLess_ThenToTheRelayOnceCharged()
+        {
+            _game.RelayTripCovered = false;
+            ReachTheArray();
+            _game.IgniterFitted = true;
+            _game.PowerOn = true;
+            _game.NightReady = true;
+            _game.NightFallen = true;
+            _game.Known.Add(StructureIds.AntennaMast);
+            _game.BuiltIds.Add(StructureIds.AntennaMast);
+            _game.AnswerStarted = true;
+            _game.AnswerDone = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningSteps.GoToRelay, _flow.CurrentIndex);
+            Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Current, "relay.1 answered, but 07 would arrive too low");
+            Assert.AreEqual(OpeningKeys.ChargeForRelay, _flow.Shown);
+            Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "one element: no key chip");
+            Tick(NextLine);
+            int said = _lines.Count;
+            _events.Publish(new ChargingChanged(true, ChargerKind.Pad, Vector3.zero));
+            Tick(Stall + Again + Reminder * 2);
+            Assert.AreEqual(said, _lines.Count, "07 charges as asked: the line is not said again, nor as a reminder");
+
+            _game.RelayTripCovered = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.GoToRelay, _flow.Shown, "charged enough: the relay line comes as the next line");
+            Assert.AreEqual(NextLineReason.Next, _flow.ShownReason);
+        }
+
         /// <summary>B7: the reserve spent and the array scanned; the cutter still has no igniter.</summary>
         private void ReachTheArray()
         {
@@ -291,6 +307,9 @@ namespace MoonProject.Gameplay.Tests
             _flow.Tick();
             _game.NightReady = true;
             _flow.Tick();
+            Assert.AreEqual(2, _milestones.Count, "the base night-ready, 07 off the pad: the night waits for the dock");
+            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
+            _flow.Tick();
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _flow.Tick();
             Assert.AreEqual(4, _milestones.Count, "once each");
@@ -309,6 +328,7 @@ namespace MoonProject.Gameplay.Tests
             _game.FirstCharge = true;
             _game.PowerOn = true;
             _game.NightReady = true;
+            _game.NightFallen = true;
             _game.BuiltIds.Add(StructureIds.AntennaMast);
             _game.RelayRelit = true;
             Assert.DoesNotThrow(() => _flow.Announce(), "every milestone the enum has is safe to replay past");
@@ -354,7 +374,7 @@ namespace MoonProject.Gameplay.Tests
             _game.BuiltIds.Add(StructureIds.BatteryBank);
             Expect(OpeningKeys.MoveBatteryBank, "built, but the grid does not reach it");
             _game.NightReady = true;
-            Expect(OpeningKeys.AwaitNight, "moved within reach: the base waits for the night");
+            Expect(OpeningKeys.DockForNight, "moved within reach: dock on the pad for the night");
         }
 
         [Test]
@@ -383,6 +403,25 @@ namespace MoonProject.Gameplay.Tests
             Tick(NextLine);
             _flow.Tick(1f);
             Assert.AreEqual(2, _lines.Count, "once");
+        }
+
+        [Test]
+        public void WatchingANewGamesWake_IsNoStall_TheReminderCountsFromTheHandOver()
+        {
+            _events.Publish(new RoverWakeBeatReached(WakeBeat.FadedOut));
+            _flow.Tick(1f);
+            _events.Publish(new RoverWakeBeatReached(WakeBeat.ChecksBegin));
+            Tick(Stall + Again);
+            Assert.IsEmpty(_lines, "the wake plays: no line nags a player who only watches it");
+
+            _events.Publish(new BootCheckFinished());
+            _flow.Tick(1f);
+            Tick(NextLine);
+            CollectionAssert.AreEqual(new[] { OpeningKeys.DriveToLander, string.Empty }, _lines, "the hand-over line");
+            Tick(Stall - 2);
+            Assert.AreEqual(2, _lines.Count, "the stall counts from the hand-over, not from the wake");
+            Tick(2);
+            Assert.AreEqual(NextLineReason.Reminder, _changes[_changes.Count - 1].Reason);
         }
 
         [Test]
@@ -579,7 +618,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheWaitForTheNight_IsNeverReminded()
+        public void TheNightfall_PlaysOnThePad_WithNothingSaid()
         {
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
@@ -592,9 +631,15 @@ namespace MoonProject.Gameplay.Tests
             _game.DuskBegun = true;
             _game.NightReady = true;
             _flow.Tick(1f);
-            Assert.AreEqual(OpeningKeys.AwaitNight, _flow.Current);
+            Assert.AreEqual(OpeningKeys.DockForNight, _flow.Current);
+            _events.Publish(new RoverDockChanged(true, Vector3.zero, Quaternion.identity));
+            _events.Publish(new ChargingChanged(true, ChargerKind.Pad, Vector3.zero));
+            _flow.Tick(1f);
+            _flow.Tick(1f);
+            Assert.IsTrue(_flow.HasReached(OpeningMilestone.NightReady), "docked: the nightfall begins");
+            Assert.AreEqual(string.Empty, _flow.Current, "the night falls with nothing said");
             Tick(Stall * 10);
-            Assert.IsEmpty(_lines, "nothing to do but wait: no reminder");
+            Assert.IsEmpty(_lines, "nothing to do but watch: no line, no reminder");
         }
 
         [Test]
@@ -741,10 +786,7 @@ namespace MoonProject.Gameplay.Tests
             public bool AnswerStarted { get; set; }
             public bool AtRelay { get; set; }
             public bool RelayRelit { get; set; }
-            public bool HeadlampUnlocked { get; set; }
-            public bool CoversHeadlamp { get; set; }
-            public bool RackOut { get; set; }
-            public bool HeadlampFitted { get; set; }
+            public bool RelayTripCovered { get; set; } = true;
             public readonly Dictionary<string, Vector3> Places = new Dictionary<string, Vector3>();
             public readonly HashSet<string> OutOfReach = new HashSet<string>();
 

@@ -73,6 +73,12 @@ namespace MoonProject.Gameplay
         /// <summary>True from the walls starting to rise until they are down again.</summary>
         public bool Raised => _stage != Stage.Open;
 
+        /// <summary>
+        /// The pad keeps 07 (a day-end beat runs): once locked, the walls stay up even when the cells are full, until
+        /// this is let go.
+        /// </summary>
+        public bool Keep { get; set; }
+
         /// <summary>The lock stands as 07 woke into it (a loaded game): shown at once, with no beats and no motion.
         /// </summary>
         public bool Silent { get; private set; }
@@ -247,7 +253,7 @@ namespace MoonProject.Gameplay
             }
 
             FillStrips(_litCells, cells);
-            if (!full || _time < _tuning.LockDwellSeconds)
+            if (!full || Keep || _time < _tuning.LockDwellSeconds)
             {
                 return;
             }

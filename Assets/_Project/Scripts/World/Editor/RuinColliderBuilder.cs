@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Art.Editor;
 using MoonProject.Core;
@@ -10,14 +11,20 @@ namespace MoonProject.World.Editor
     /// <c>UCX_&lt;Part&gt;_&lt;n&gt;</c> child mesh becomes a convex <see cref="MeshCollider"/> on
     /// <see cref="Layers.Prop"/> with its renderer hidden, so walls, modules and props are solid exactly where Art
     /// drew them while doorways, the workshop floor, the airlock face and the gaps between pieces stay open. Edit
-    /// time: the scene build fits them once and saves them with the scene.
+    /// time: the scene build fits them once and saves them with the scene. A few drawn parts the proxies leave partly
+    /// open (<see cref="LandmarkSettings.HullParts"/>) also get the convex hull of their own mesh, so the chase
+    /// camera, which sees only colliders, keeps out of them.
     /// </summary>
     public static class RuinColliderBuilder
     {
-        /// <summary>Gives every collision proxy under <paramref name="ruin"/> its convex collider.</summary>
+        /// <summary>
+        /// Gives every collision proxy under <paramref name="ruin"/> its convex collider, and each of its
+        /// <paramref name="hullParts"/> ("Ruin/Node") the convex hull of its own mesh.
+        /// </summary>
         /// <returns>The number of colliders built.</returns>
-        /// <exception cref="InvalidOperationException">The ruin carries no collision proxy.</exception>
-        public static int Fit(GameObject ruin)
+        /// <exception cref="InvalidOperationException">The ruin carries no collision proxy, or a hull part is missing.
+        /// </exception>
+        public static int Fit(GameObject ruin, IReadOnlyList<string> hullParts)
         {
             if (ruin == null)
             {
@@ -57,7 +64,37 @@ namespace MoonProject.World.Editor
                     $"{R1ModelPostprocessor.CollisionProxyPrefix}* collision proxy; rebuild Art's R1 ruins.");
             }
 
+            string prefix = ruin.name + "/";
+            foreach (string part in hullParts ?? Array.Empty<string>())
+            {
+                if (!part.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                MeshFilter filter = Part(ruin, part.Substring(prefix.Length));
+                var hull = filter.gameObject.AddComponent<MeshCollider>();
+                hull.sharedMesh = filter.sharedMesh;
+                hull.convex = true;
+                filter.gameObject.layer = Layers.Prop;
+                built++;
+            }
+
             return built;
+        }
+
+        private static MeshFilter Part(GameObject ruin, string node)
+        {
+            foreach (MeshFilter filter in ruin.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.name == node && filter.sharedMesh != null)
+                {
+                    return filter;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"{ruin.name} has no drawn '{node}' to make solid (Art's R1 contract).");
         }
     }
 }

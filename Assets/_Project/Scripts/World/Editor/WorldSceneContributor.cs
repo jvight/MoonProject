@@ -76,6 +76,8 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
+            AssignRocks(context, serialized, "_talusRocks", WorldPaths.TalusRocks);
+            Assign(serialized, "_talusMaterial", context.LoadAsset<Material>(WorldPaths.RimTalusMaterial));
             Assign(serialized, "_earthlight", earthlight);
             Assign(serialized, "_fillLight", fill);
             Assign(serialized, "_peakBeacon", beacon);
@@ -138,7 +140,7 @@ namespace MoonProject.World.Editor
                 Quaternion rotation = Quaternion.Euler(0f, piece.Yaw, 0f) * prefab.transform.localRotation;
                 GameObject instance = context.InstantiatePrefab(prefab, ruinsRoot, position, rotation);
                 instance.name = piece.Id;
-                RuinColliderBuilder.Fit(instance);
+                RuinColliderBuilder.Fit(instance, settings.Landmarks.HullParts);
                 if (piece.Id == FallenSolarArrayName)
                 {
                     StandArrayGlint(context, settings, instance, root);

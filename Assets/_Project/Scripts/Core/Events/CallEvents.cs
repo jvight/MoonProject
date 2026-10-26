@@ -41,16 +41,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 tried to answer the call from the sky and could not (docs/design/opening-v3-purpose.md R7): at night, with the
-    /// base night-ready and the call clear, once in a game. Rover lowers its head and drops the antenna lamp, Audio
-    /// plays the failed query chirp (F sharp), UI shows <c>TX · NO RANGE</c> on 07's face. Published live only: a
-    /// loaded game that already tried says nothing.
-    /// </summary>
-    public readonly struct CallReplyFailed
-    {
-    }
-
-    /// <summary>
     /// A segment of the antenna mast locked home as it was raised (docs/design/opening-v3-plan.md 3.3): base, middle,
     /// top in order. Published live only, at the mast's <see cref="Position"/>, for Audio's clunks.
     /// </summary>

@@ -71,6 +71,68 @@ namespace MoonProject.UI.PlayModeTests
             yield return Fit(BigTextPresses);
         }
 
+        /// <summary>
+        /// GD's in-game text pass (docs/design/writing-style-ingame.md): every opening line, in Vietnamese (the longer)
+        /// and English, stays on screen and clear of the battery dial and the Sun's arc at 16:9 and 21:9 (the owner's
+        /// 2000x837 window included).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EveryOpeningLine_InBothLanguages_FitsAt16x9And21x9()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            ScreenShape first = ScreenShapes.All[0];
+            _rig = UiTestRig.Boot(_controls, _slot, first.Width, first.Height);
+            UiLayout layout = _rig.Ui.Layout;
+            EventBus events = _rig.Bootstrap.Context.Events;
+            yield return null;
+            events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Cells = 4;
+            _rig.Fakes.Charge = 2f;
+            events.Publish(new BatteryArcRevealed(false));
+            yield return Seconds(1f);
+            var keys = new List<string>();
+            foreach (System.Reflection.FieldInfo field in typeof(OpeningKeys).GetFields())
+            {
+                if (field.IsLiteral && field.GetRawConstantValue() is string key && key.StartsWith("next.",
+                        StringComparison.Ordinal))
+                {
+                    keys.Add(key);
+                }
+            }
+
+            Assert.Greater(keys.Count, 20, "the opening's lines were found");
+            string language = _rig.Ui.Localization.Language;
+            foreach (string lang in new[] { "vi", "en" })
+            {
+                _rig.Ui.Localization.SetLanguage(lang);
+                foreach (ScreenShape shape in LineShapes)
+                {
+                    yield return Reframe(shape);
+                    foreach (string key in keys)
+                    {
+                        events.Publish(new NextStepChanged(key, NextLineReason.Reminder, default, false, false, null,
+                            Vector3.zero));
+                        yield return Seconds(_rig.Tuning.Guidance.Line.FadeIn + 0.15f);
+                        yield return Check(shape, lang + " " + key, (label, found) =>
+                        {
+                            ScreenFit.CheckApart(layout.NextLine, layout.BatteryDial, label, found);
+                            ScreenFit.CheckApart(layout.NextLine, layout.SunArc, label, found);
+                        });
+                        events.Publish(new NextStepChanged(string.Empty));
+                        yield return Seconds(_rig.Tuning.Guidance.Line.FadeOut + 0.1f);
+                    }
+                }
+            }
+
+            _rig.Ui.Localization.SetLanguage(language);
+            Assert.IsEmpty(_problems, "every opening line fits:\n" + string.Join("\n", _problems));
+        }
+
+        private static readonly ScreenShape[] LineShapes =
+        {
+            ScreenShapes.All[0], ScreenShapes.All[2], ScreenShapes.All[6], ScreenShapes.All[9],
+        };
+
         private IEnumerator Fit(int textSizePresses)
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();

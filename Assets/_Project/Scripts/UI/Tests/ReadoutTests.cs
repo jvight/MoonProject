@@ -87,7 +87,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheProtocolLines_ReadAsDesigned_InBothLanguages()
         {
-            Assert.AreEqual("POWER · OFFLINE", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOffline)));
+            Assert.AreEqual("POWER · OFF", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOffline)));
             Assert.AreEqual("POWER · ON", _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.PowerOn)));
             Assert.AreEqual("LINK · 0/1 · SIGNAL WEST",
                 _localization.Get(OpeningProtocol.KeyOf(ProtocolLine.LinkSignalWest)));
@@ -137,8 +137,8 @@ namespace MoonProject.UI.Tests
 
         [TestCase("en", 1, "Solar Array · blueprint 1/3")]
         [TestCase("en", 3, "Solar Array · blueprint 3/3 · learned")]
-        [TestCase("vi", 1, "Giàn pin mặt trời · bản vẽ 1/3")]
-        [TestCase("vi", 3, "Giàn pin mặt trời · bản vẽ 3/3 · đã học")]
+        [TestCase("vi", 1, "Dàn pin mặt trời · bản vẽ 1/3")]
+        [TestCase("vi", 3, "Dàn pin mặt trời · bản vẽ 3/3 · đã học")]
         public void AScanSetsProgress_ReadsPlainly_AndFitsThePlate(string language, int step, string expected)
         {
             const int plateCharacters = 52;
@@ -290,6 +290,30 @@ namespace MoonProject.UI.Tests
             queue.Tick(Frame, true, true);
             queue.YieldSystemCards();
             Assert.IsTrue(queue.IsShowing, "a story card is not a system report: it keeps its hold");
+        }
+
+        [Test]
+        public void AMakerBar_RidesOnItsScansOwnCard_WaitingOrShown_ElseItsOwn()
+        {
+            var settings = new GuidanceSettings();
+            var queue = new ReadoutQueue(settings);
+            queue.Offer(new ReadoutRequest(ReadoutKind.Story, textKey: "story.airlock_panel"));
+            Assert.AreEqual(MakerAttach.Waiting, queue.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"));
+            queue.Tick(Frame, true, true);
+            Assert.AreEqual(ReadoutKind.Story, queue.Current.Kind);
+            Assert.AreEqual("KESSLER–ARAI █░ · next: SSR-3 Headlamp", queue.Current.MakerLine,
+                "the bar came first in the frame: the story card carries it");
+
+            Assert.AreEqual(MakerAttach.Shown, queue.AttachMakerLine("ILC █░░ · next: Reflector Beacon"),
+                "on the card on the screen: the caller rewrites it");
+            Assert.AreEqual("ILC █░░ · next: Reflector Beacon", queue.Current.MakerLine);
+
+            var idle = new ReadoutQueue(settings);
+            Assert.AreEqual(MakerAttach.None, idle.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"),
+                "no scan card: the caller gives the bar a card of its own");
+            idle.Offer(new ReadoutRequest(ReadoutKind.System, RoverSystem.Cutter));
+            Assert.AreEqual(MakerAttach.None, idle.AttachMakerLine("KESSLER–ARAI █░ · next: SSR-3 Headlamp"),
+                "a system card is not a scan's card");
         }
 
         [Test]

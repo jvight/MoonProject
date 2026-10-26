@@ -183,6 +183,9 @@ namespace MoonProject.Gameplay
         /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
         public PadLock PadLock { get; private set; }
 
+        /// <summary>Keeps 07 on the pad through the opening's dusk and nightfall until it is full.</summary>
+        public DayEndHold DayEnd { get; private set; }
+
         /// <summary>The base's lamps, which follow the Sun (null while the opening could not be built).</summary>
         public BaseLamps BaseLamps { get; private set; }
 
@@ -381,7 +384,6 @@ namespace MoonProject.Gameplay
                 _relaySpare.gameObject, _relayFitted.gameObject);
             _battery.ConnectRelay(Relay);
             Opening.ConnectRelay(Relay);
-            Opening.ConnectHeadlamp(Understanding, Rack);
             Recovery = new RecoveryProgress(context.Events, PowerLamps, PowerSteps, _openingTuning.RecoveryLamps);
             Call = new CallProgress(context.Events, _openingTuning.Call, services.Layout);
             MastRaise = new MastRaise(context.Events, _openingTuning.MastRaise);
@@ -396,11 +398,13 @@ namespace MoonProject.Gameplay
             Opening.ConnectHints(hints);
             FirstUsePointer = new FirstUsePointer(context.Events, hints, services.Rig,
                 _building.Tuning.FirstUseGazePriority, _building.Tuning.FirstUseAskIntensity);
-            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing,
-                new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
-                    context.Get<IRoverClimb>().ClimbLimitDegrees), _battery.Model,
+            var ringModel = new RangeRingModel(_battery.Tuning, _battery.Tuning.RangeRing, services.Terrain,
+                context.Get<IRoverClimb>().ClimbLimitDegrees);
+            RangeRing = new RangeRingField(context.Events, _battery.Tuning.RangeRing, ringModel, _battery.Model,
                 new ChargePoints(Opening.Pads, Relay), services.Rover, new RelayLink(Answer, Relay));
+            Opening.ConnectTrip(ringModel, _battery.Tuning.RangeRing.PathStepMetres, _battery.Model);
             _flowTokens.Add(context.Events.Subscribe<RelayRelit>(OnRelayRelit));
+            _flowTokens.Add(context.Events.Subscribe<NextStepChanged>(OnNextStep));
             RangeRingLine = new RangeRingLine(transform, _visuals.BeamCore, RangeRing, _battery.Tuning.RangeRing,
                 services.Terrain, context.Get<IViewCamera>());
             _flowTokens.Add(context.Events.Subscribe<ChargingChanged>(OnChargingChanged));
@@ -497,6 +501,7 @@ namespace MoonProject.Gameplay
                 PadLock = new PadLock(context.Events, _baseTuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius, _openingTuning.PadPlateMargin);
                 PadLock.FaceOnRelease(opening);
+                DayEnd = new DayEndHold(context.Events);
                 BaseLamps = new BaseLamps(context.Events, _baseTuning, _building, sunlight);
                 PowerPulse = new PowerPulse(context.Events, _baseTuning, _building, BaseLamps,
                     services.Visuals.FeelSprite, transform);
@@ -688,6 +693,8 @@ namespace MoonProject.Gameplay
             Answer.Step(deltaTime, _input.ExcavateHeld, _roverState.Position, _roverState.Speed);
             RangeRing.Step(deltaTime);
             RangeRingLine.Step();
+            DayEnd.Step(PadLock.Docked, _battery.Model.CellsFull, Opening.NightFallen);
+            PadLock.Keep = DayEnd.Keep;
             PadLock.Step(deltaTime);
             BaseLamps.Step(deltaTime);
             PowerPulse.Step(deltaTime);
@@ -702,6 +709,18 @@ namespace MoonProject.Gameplay
             if (!relit.Restored)
             {
                 RangeRing.Grow(relit.RelayId, Relay.PadPoint);
+            }
+        }
+
+        /// <summary>
+        /// The line asks 07 to charge before the relay.1 trip: the ring shows with it, so relay.1 reads as outside what
+        /// this charge reaches.
+        /// </summary>
+        private void OnNextStep(NextStepChanged changed)
+        {
+            if (changed.LineKey == OpeningKeys.ChargeForRelay)
+            {
+                RangeRing.ShowShortfall();
             }
         }
 
@@ -868,6 +887,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             ApronGuide?.Dispose();
+            DayEnd?.Dispose();
             ScanMark?.Dispose();
             foreach (IDisposable token in _saveTokens)
             {

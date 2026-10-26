@@ -84,17 +84,11 @@ namespace MoonProject.Gameplay
         /// <summary>relay.1's spare is fitted and it is lit (R10).</summary>
         bool RelayRelit { get; }
 
-        /// <summary>Kessler–Arai understanding has unlocked the adapted SSR-3 headlamp (5.2).</summary>
-        bool HeadlampUnlocked { get; }
-
-        /// <summary>07's hold covers the assembly cost of the SSR-3 headlamp (5.2).</summary>
-        bool CoversHeadlamp { get; }
-
-        /// <summary>The socket rack stands out at the pad (the first dock after the release brings it out).</summary>
-        bool RackOut { get; }
-
-        /// <summary>The SSR-3 headlamp is assembled: the rack's headlamp bay is filled (5.2).</summary>
-        bool HeadlampFitted { get; }
+        /// <summary>
+        /// 07's charge covers the drive to relay.1 with the margin to spare (<see cref="RelayTrip"/>), or its cells are
+        /// full; once it has, it stays so for the trip (R9).
+        /// </summary>
+        bool RelayTripCovered { get; }
 
         /// <summary>
         /// The place in the world where the action of line <paramref name="lineKey"/> happens (the apron, a crate, the

@@ -132,6 +132,19 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void AKeptLock_StaysLockedWhenFull_UntilLetGo_ThenRunsItsFullBeat()
+        {
+            DockLock dock = Locked(3f, 4);
+            dock.Keep = true;
+            Run(dock, true, 4f, 4, _tuning.LockDwellSeconds + _tuning.FullSweepSeconds + _tuning.WallLowerSeconds * 4f);
+            Assert.IsTrue(dock.Locked, "a day-end beat keeps the walls up round a full 07");
+            Assert.AreNotEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase, "no full beat while kept");
+            dock.Keep = false;
+            Run(dock, true, 4f, 4, Frame * 2f);
+            Assert.AreEqual(FeelPhase.Reward, _beats[_beats.Count - 1].Phase, "let go: the full beat, then the walls lower");
+        }
+
+        [Test]
         public void DrivingOffEarly_DropsTheWallsAtOnce_WithACancel()
         {
             DockLock dock = Locked(2f, 4);

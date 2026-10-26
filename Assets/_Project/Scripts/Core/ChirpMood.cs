@@ -30,7 +30,7 @@ namespace MoonProject.Core
         /// <summary>A friend meets 07 at home.</summary>
         Greeting = 7,
 
-        /// <summary>07 asks the sky and nothing answers: the reply to the call failed (CallReplyFailed).</summary>
+        /// <summary>07 asks something and nothing answers: a query left hanging.</summary>
         Ask = 8,
     }
 }

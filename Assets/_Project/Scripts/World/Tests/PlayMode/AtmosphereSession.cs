@@ -111,6 +111,10 @@ namespace MoonProject.World.PlayModeTests
         private const float GateSlotLookIn = 16f;
         private const float GateZoomFov = 12f;
 
+        // The radio tower's dish scan (ruin.RadioTower.1): Art's scan node and 07's stand-offs from it.
+        private const string TowerScanTarget = "Scan_1";
+        private static readonly float[] TowerScanStandOffs = { 7f, 4f };
+
         // The rim filmed: the floor views stand this far out on their bearings, and every view looks at the wall this
         // far out and this high (the foot of the wall up to its middle).
         private const float RimFloorEastBearing = 60f;
@@ -120,6 +124,11 @@ namespace MoonProject.World.PlayModeTests
         private const float RimFloorDistance = 170f;
         private const float RimLookDistance = 370f;
         private const float RimLookHeight = 15f;
+
+        // The wall's foot up close, where its talus lies: the eye on the floor, looking at the foot and just above.
+        private const float RimFootEyeDistance = 300f;
+        private const float RimFootLookDistance = 336f;
+        private const float RimFootLookHeight = 4f;
 
         // The beats where the world should lead: where the naive bot's 07 stands as each step begins (n0ac9ae9ec's
         // log), the targets, the habitat's module brought home before nightfall, the bot's screen and the dusk's lead.
@@ -152,6 +161,13 @@ namespace MoonProject.World.PlayModeTests
         private const string RelaySiteCabinet = "ServiceCabinet";
         private const string RelaySiteSpare = "ServiceCabinet/FeedUnitSpare_Slot/FeedUnitSpare";
         private const string RelaySiteFitted = "FeedSocket/FeedUnitFitted";
+        private const string RelaySiteSocket = "FeedSocket";
+        private const string RelaySiteMast = "WestMast";
+
+        // 07 is 1.47 m wide: the least gap it may be driven through toward the socket, and the view from above it.
+        private const float RelaySiteMinGap = 3f;
+        private const float RelaySiteTopHeight = 14f;
+        private const float RelaySiteTopBack = 6f;
 
         // The repair's power-up as Gameplay times it after the fit (RelayRepairSettings' defaults), and how long after
         // each stage its frame is shot.
@@ -988,6 +1004,17 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsNotNull(cabinet, "relay.1's site has its cabinet");
             Assert.IsNotNull(spare, "the cabinet holds the spare");
 
+            // The socket's approach: the clear gap between the cabinet and the mast, where 07 must never wedge.
+            Bounds cabinetBounds = ColliderBounds(cabinet);
+            Bounds mastBounds = ColliderBounds(FindNamed(RelaySiteMast));
+            float gap = HorizontalGap(cabinetBounds, mastBounds);
+            Vector3 socket = site.InverseTransformPoint(site.Find(RelaySiteSocket).position);
+            Debug.Log($"[relay-site] cabinet to mast gap {gap:F2} m; socket at {socket} in the site's frame (x right, " +
+                      $"z toward the base); cabinet at {site.InverseTransformPoint(cabinet.position)}");
+            bool farSide = Mathf.Sign(site.InverseTransformPoint(cabinet.position).x) != Mathf.Sign(socket.x);
+            Assert.IsTrue(farSide, "07's way to the socket never runs between the cabinet and the mast");
+            Assert.GreaterOrEqual(gap, RelaySiteMinGap, "07 circling the mast fits between it and the cabinet with room");
+
             // The cabinet's open front: the site's facing (toward the base) turned by the cabinet's tuned yaw.
             Vector3 front = Quaternion.Euler(0f, settings.Landmarks.Relay1Site.CabinetYaw, 0f) * site.forward;
             Vector3 near = OnGround(context.Get<ITerrainQuery>(),
@@ -1004,6 +1031,9 @@ namespace MoonProject.World.PlayModeTests
                 camera.CopyFrom(view);
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
+                Vector3 above = site.position + Vector3.up * RelaySiteTopHeight + site.forward * RelaySiteTopBack;
+                Place(camera, LookPose("relay-site-top", above, site.position, OpeningFov));
+                Shoot(camera, "relay-site-top");
                 Place(camera, LookPose("relay-site-15m-before", near, spare.position, OpeningFov));
                 Shoot(camera, "relay-site-15m-before");
                 Place(camera, LookPose("relay-site-apron-before", apronEye, cabinet.position, OpeningFov));
@@ -1554,7 +1584,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The crater's rim as the owner sees it (its look against real lunar walls): from the basin floor toward the
         /// canyon's mouth and toward the south rim, from the ruins' rise and from the pad, by day (the low golden-hour
-        /// Sun, look C) and by night (earthlight, look A). Logs/world-captures/rim-*.png.
+        /// Sun, look C) and by night (earthlight, look A), and the south wall's foot up close where its talus lies.
+        /// Logs/world-captures/rim-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -1601,6 +1632,8 @@ namespace MoonProject.World.PlayModeTests
                     look: RimSpot(terrain, RimFloorSouthBearing, RimLookDistance, RimLookHeight)),
                 (name: "rise", eye: rise, look: RimSpot(terrain, RimRiseBearing, RimLookDistance, RimLookHeight)),
                 (name: "pad", eye: apron, look: RimSpot(terrain, RimPadBearing, RimLookDistance, RimLookHeight)),
+                (name: "foot-south", eye: RimSpot(terrain, RimFloorSouthBearing, RimFootEyeDistance, OpeningEyeHeight),
+                    look: RimSpot(terrain, RimFloorSouthBearing, RimFootLookDistance, RimFootLookHeight)),
             };
 
             Camera view = context.Get<IViewCamera>().Camera;
@@ -1634,10 +1667,104 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        // The world bounds of every collider under root.
+        private static Bounds ColliderBounds(Transform root)
+        {
+            Collider[] colliders = root.GetComponentsInChildren<Collider>();
+            Assert.IsNotEmpty(colliders, $"{root.name} is solid");
+            Bounds bounds = colliders[0].bounds;
+            foreach (Collider collider in colliders)
+            {
+                bounds.Encapsulate(collider.bounds);
+            }
+
+            return bounds;
+        }
+
+        // The clear distance between two boxes on the ground plane (0 when they overlap).
+        private static float HorizontalGap(Bounds a, Bounds b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(a.min.x - b.max.x, b.min.x - a.max.x));
+            float dz = Mathf.Max(0f, Mathf.Max(a.min.z - b.max.z, b.min.z - a.max.z));
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
         // A point on the ground on a bearing from the base, raised by a height.
         private static Vector3 RimSpot(ITerrainQuery terrain, float bearing, float distance, float height)
         {
             return OnGround(terrain, MoonSurface.BearingToDirection(bearing) * distance) + Vector3.up * height;
+        }
+
+        /// <summary>
+        /// 07 at the radio tower's dish scan (ruin.RadioTower.1), the chase camera as it settles there: from its stand
+        /// off toward the base and from close in, so a camera caught under the dish frame shows.
+        /// Logs/world-captures/tower-scan-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator TowerScan_IsFilmed_FromTheChaseCamera()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.FirstCharge, true));
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            Transform target = FindIn(FindNamed(CueTowerName), TowerScanTarget);
+            Vector3 apron = Anchor(context.Get<IWorldAnchors>(), WorldAnchorIds.PlaceApron).Position;
+            Vector3 toBase = Vector3.ProjectOnPlane(apron - target.position, Vector3.up).normalized;
+            Camera view = context.Get<IViewCamera>().Camera;
+            foreach (float standOff in TowerScanStandOffs)
+            {
+                Vector3 spot = target.position + toBase * standOff;
+                context.Get<IRoverPlacement>().PlaceAt(OnGround(context.Get<ITerrainQuery>(),
+                    new Vector2(spot.x, spot.z)), Quaternion.LookRotation(-toBase, Vector3.up));
+                yield return new WaitForSeconds(SettleSeconds);
+                Shoot(view, $"tower-scan-{standOff:F0}m");
+                Debug.Log($"[tower-scan] {standOff:F0} m: camera at {view.transform.position}, " +
+                          $"{Vector3.Distance(view.transform.position, target.position):F1} m from the dish's scan");
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        // A node anywhere under root, by name.
+        private static Transform FindIn(Transform root, string name)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            throw new InvalidOperationException($"{root.name} has no '{name}'.");
         }
 
         private static void ShootAt(Camera camera, string name, Vector3 eye, Vector3 look, float fov)

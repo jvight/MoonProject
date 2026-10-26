@@ -136,6 +136,17 @@ something is calling 07. The limit chain (§3) works the same under either hook.
   3. The ring now reaches **the rille notch, with the black Mare beyond it**: 0.6's goal, in view.
   4. **Relay 2** (east) appears as the next dashed node: optional, more range.
 
+**Balance (final, 2026-10-26; story's cl-v3-dayend, measured by the bot's per-beat cells table):**
+- **Range:** 220 m per cell, so 880 m driving on 4 cells. The game starts at 60% charge.
+- **Both day-end beats happen on the pad:** dusk on the next dock after `PowerOn`, and nightfall while docked.
+  07 is released only when full (the dock walls lock; the sky turns in 10–16 s).
+- **Every main leg stays at 53% or above:** B9 and B11 start at 100%, and the relay.1 trip starts full (the
+  'charge up at the pad first' line). The optional seismic leg is the lowest, at about 23%.
+- **The ring:** unlit, it reaches about 440 m from the pad, so the rille notch (489 m) sits about 49 m outside.
+  Relay 1 lit grows it by about 145 m, across the notch. The relay.1 round trip is about 70% of a full charge.
+- **The Low line:** it fires once, early, on the drive to the lander (the intended felt need). It is suppressed
+  near a relay whose spare is reachable.
+
 **Hour two (off the spine, all optional):**
 - **Kestrel-3:**
   - the hex plate limit, `CONTACT · HEX · NO ADAPTER`;

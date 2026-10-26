@@ -354,6 +354,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<DatabankEntryAdded>(OnDatabankEntryAdded));
             _tokens.Add(events.Subscribe<DatabankEntryProgressed>(_ => _databank?.Refresh()));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
+            _tokens.Add(events.Subscribe<UnderstandingGained>(OnUnderstandingGained));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<PartFitted>(_ => _director.NotifyUsed(InteractionKind.FitPart)));
             _tokens.Add(events.Subscribe<TowAttached>(_ => _director.NotifyUsed(InteractionKind.Tether)));
@@ -1680,7 +1681,7 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// 07's face says "no line of sight" while the cue lasts (or the failed reply's line, or a databank toast), and
+        /// 07's face says "no line of sight" while the cue lasts (or a story moment's line, or a databank toast), and
         /// otherwise shows the call when the guidance slot grants it, unless the self-test or the hold already has the
         /// face; a line cuts the call at once rather than overlapping it. The face is handed back only if nothing else
         /// took it meanwhile.
@@ -1809,6 +1810,29 @@ namespace MoonProject.UI
             if (_bound && !learned.Restored)
             {
                 _unlockCard.Learned(learned.StructureId);
+            }
+        }
+
+        /// <summary>
+        /// A maker scan moved 07's understanding on (opening-v3-payoff-audit §3): its maker bar rides on that scan's
+        /// card when the next unlock has a name, and an adapted blueprint it unlocked gets its card at once.
+        /// </summary>
+        private void OnUnderstandingGained(UnderstandingGained gained)
+        {
+            if (!_bound)
+            {
+                return;
+            }
+
+            if (MakerBar.TryName(gained.AdaptedId, _localization, out string nameKey))
+            {
+                _unlockCard.LearnedAdapted(gained.AdaptedId, nameKey);
+            }
+
+            if (MakerBar.TryLine(gained.Maker, gained.Points, gained.NextThreshold, gained.NextAdaptedId,
+                    _localization, out string line))
+            {
+                _readout.MakerStep(line);
             }
         }
 

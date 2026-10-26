@@ -42,6 +42,8 @@ namespace MoonProject.Rover.Editor
                 camera.farClipPlane = tuning.FarClip;
                 var cameraData = cameraHost.AddComponent<UniversalAdditionalCameraData>();
                 cameraData.renderPostProcessing = true;
+                cameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+                cameraData.antialiasingQuality = AntialiasingQuality.High;
                 var brain = cameraHost.AddComponent<CinemachineBrain>();
                 brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut,
                     DefaultBlendSeconds);

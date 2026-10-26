@@ -48,7 +48,7 @@
         },
         {
             "key": "ui.hint.drive",
-            "text": "Lái xe"
+            "text": "Lái"
         },
         {
             "key": "ui.controls.look",
@@ -576,7 +576,7 @@
         },
         {
             "key": "hint.deconstruct",
-            "text": "Tháo dỡ"
+            "text": "Tháo"
         },
         {
             "key": "build.strip.title",
@@ -584,11 +584,11 @@
         },
         {
             "key": "build.cost.affordable",
-            "text": "Sẵn sàng đặt"
+            "text": "Đủ vật liệu"
         },
         {
             "key": "build.cost.short",
-            "text": "Chưa đủ phế liệu"
+            "text": "Thiếu vật liệu"
         },
         {
             "key": "build.reason.steep",
@@ -596,7 +596,7 @@
         },
         {
             "key": "build.reason.overlaps",
-            "text": "Vướng công trình khác"
+            "text": "Vướng chỗ"
         },
         {
             "key": "build.reason.close",
@@ -608,15 +608,15 @@
         },
         {
             "key": "build.reason.outside",
-            "text": "Ngoài tầm căn cứ"
+            "text": "Quá xa căn cứ"
         },
         {
             "key": "build.reason.blocked",
-            "text": "Cần dọn chỗ trước"
+            "text": "Dọn chỗ trước"
         },
         {
             "key": "build.reason.frame",
-            "text": "Kéo mô-đun nguồn về sân trước"
+            "text": "Cần kéo mô-đun nguồn về đây trước"
         },
         {
             "key": "structure.charging_pad.name",
@@ -624,23 +624,23 @@
         },
         {
             "key": "structure.charging_pad.desc",
-            "text": "Bệ đỗ để sạc pin cho 07 khi có điện."
+            "text": "Đỗ lên để sạc pin. Cần nguồn điện"
         },
         {
             "key": "structure.solar_array.name",
-            "text": "Giàn pin mặt trời"
+            "text": "Dàn pin mặt trời"
         },
         {
             "key": "structure.solar_array.desc",
-            "text": "Giàn tấm pin hướng nắng thấp, cấp điện cho các công trình quanh đó."
+            "text": "Lấy nắng, cấp điện cho bệ sạc và căn cứ"
         },
         {
             "key": "structure.battery_bank.name",
-            "text": "Cụm pin tích điện"
+            "text": "Bộ tích điện"
         },
         {
             "key": "structure.battery_bank.desc",
-            "text": "Tích trữ điện dự phòng để căn cứ luôn sáng đèn qua bóng tối."
+            "text": "Trữ điện ban ngày, giữ đèn sáng qua đêm"
         },
         {
             "key": "structure.power_pylon.name",
@@ -656,7 +656,7 @@
         },
         {
             "key": "structure.antenna_mast.desc",
-            "text": "Truyền tín hiệu của trạm đi xa hơn qua vành miệng hố."
+            "text": "Để 07 phát sóng ra ngoài vành hố"
         },
         {
             "key": "build.locked",
@@ -672,123 +672,111 @@
         },
         {
             "key": "next.v2.drive_lander",
-            "text": "Lái tới tàu đổ bộ."
+            "text": "Lái tới tàu đổ bộ"
         },
         {
             "key": "next.v2.scan_lander",
-            "text": "Quét hai bộ phận trong thùng hàng mở của tàu đổ bộ."
+            "text": "Quét hai mảnh trong thùng hàng mở"
         },
         {
             "key": "next.v2.collect_parts",
-            "text": "Lấy các bộ phận trong thùng hàng mở."
+            "text": "Nhặt phụ tùng trong thùng"
         },
         {
             "key": "next.v2.build_pad",
-            "text": "Xây bệ sạc trên bãi kẻ vạch."
+            "text": "Xây bệ sạc ở bãi xây"
         },
         {
             "key": "next.v2.charge",
-            "text": "Đỗ lên bệ để sạc."
+            "text": "Đỗ lên bệ sạc"
         },
         {
             "key": "next.v2.park_on_pad",
-            "text": "Đỗ lên bệ để lắp bộ đánh lửa."
+            "text": "Đỗ lên bệ sạc để lắp bộ đánh lửa"
         },
         {
             "key": "next.v2.fit_igniter",
-            "text": "Lắp bộ đánh lửa dự phòng vào mỏ cắt."
+            "text": "Lắp bộ đánh lửa vào mỏ cắt"
         },
         {
             "key": "next.v2.take_igniter",
-            "text": "Lấy bộ đánh lửa dự phòng ở giá cạnh giàn pin."
+            "text": "Nhặt bộ đánh lửa ở giá cạnh dàn pin"
         },
         {
             "key": "next.v2.find_solar",
-            "text": "Tàu đổ bộ đã cạn điện. Tìm giàn pin mặt trời trong tàn tích."
+            "text": "Tàu đổ bộ cạn điện. Tìm dàn pin mặt trời ở phế tích"
         },
         {
             "key": "next.v2.cut_optics",
-            "text": "Cắt rời các tấm pin và hộp nối dây của giàn pin đổ."
+            "text": "Cắt tấm pin và hộp dây khỏi dàn pin đổ"
         },
         {
             "key": "next.v2.build_solar",
-            "text": "Xây giàn pin mặt trời cạnh bệ sạc."
+            "text": "Xây dàn pin mặt trời cạnh bệ sạc"
         },
         {
             "key": "next.v2.build_battery_bank",
-            "text": "Dựng cụm pin tích điện lên mô-đun."
+            "text": "Xây bộ tích điện lên mô-đun nguồn"
         },
         {
             "key": "next.v2.move_battery_bank",
-            "text": "Dời cụm pin tích điện lại gần bệ sạc."
+            "text": "Dời bộ tích điện lại gần bệ sạc"
         },
         {
             "key": "next.v2.scan_tower",
-            "text": "07 chưa phát sóng được. Quét tháp radio để lấy bản vẽ ăng-ten."
+            "text": "Chưa phát sóng được. Quét tháp radio"
         },
         {
             "key": "next.v2.build_mast",
-            "text": "Xây cột ăng-ten."
+            "text": "Xây cột ăng-ten"
         },
         {
             "key": "next.v3.scan_module",
-            "text": "Đêm sắp xuống. Quét mô-đun điện của khu nhà ở."
+            "text": "Đêm sắp xuống. Quét mô-đun nguồn ở khu nhà ở"
         },
         {
             "key": "next.v3.hook_module",
-            "text": "Móc cáp vào mô-đun nguồn và kéo về sân."
+            "text": "Móc cáp vào mô-đun nguồn"
         },
         {
             "key": "next.v3.tow_module",
-            "text": "Mô-đun điện là khung của cụm pin. Kéo nó về sân."
+            "text": "Kéo mô-đun về bãi xây: nó là khung của bộ tích điện"
         },
         {
             "key": "next.v3.free_cable",
-            "text": "Lùi lại để gỡ cáp."
+            "text": "Lùi lại để gỡ cáp"
         },
         {
             "key": "next.v3.dock_for_dusk",
-            "text": "Đỗ vào bệ để kết thúc ngày."
+            "text": "Về bệ sạc nghỉ qua đêm"
         },
         {
             "key": "next.v3.transmit",
-            "text": "Phát sóng từ cột ăng-ten."
+            "text": "Phát sóng từ cột ăng-ten"
         },
         {
-            "key": "next.v3.await_night",
-            "text": "Căn cứ đã sẵn sàng cho đêm."
+            "key": "next.v3.dock_for_night",
+            "text": "Căn cứ đã sẵn sàng. Về bệ sạc đón đêm"
         },
         {
             "key": "next.v3.go_relay",
-            "text": "relay.1 đã đáp lời từ vành phía tây. Hãy lái tới đó."
+            "text": "Trạm tiếp sóng 1 đang yếu dần. Tới sửa nó"
         },
         {
-            "key": "next.v3.scan_elder06",
-            "text": "06 nằm gục ở relay.2 cạnh cửa hẻm núi. Lái tới đó và quét nó."
-        },
-        {
-            "key": "next.v3.cut_headlamp_crate",
-            "text": "Cắt thùng hàng cạnh 06 để lấy linh kiện đèn pha."
-        },
-        {
-            "key": "next.v3.assemble_headlamp",
-            "text": "Lắp đèn pha SSR-3 ở giá cạnh bệ sạc."
-        },
-        {
-            "key": "next.v3.dock_for_rack",
-            "text": "Đỗ lên bệ sạc để mở giá linh kiện."
+            "key": "next.v3.charge_for_relay",
+            "text": "Về bệ sạc nạp đầy trước"
         },
         {
             "key": "battery.low.lander",
-            "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ để sạc."
+            "text": "Pin yếu. Xây bệ sạc cạnh tàu đổ bộ"
         },
         {
             "key": "battery.low.pad",
-            "text": "Pin yếu. Hãy về bệ sạc."
+            "text": "Pin yếu. Về bệ sạc"
         },
         {
             "key": "ui.unlock.blueprint",
-            "text": "Đã học bản vẽ: {0}"
+            "text": "Bản vẽ mới: {0}"
         },
         {
             "key": "ui.system.wheels",
@@ -880,7 +868,7 @@
         },
         {
             "key": "ui.device.scan.ok",
-            "text": "Đọc mảnh vỡ và tàn tích."
+            "text": "Đọc mảnh vỡ và phế tích."
         },
         {
             "key": "ui.device.cutter.ok",
@@ -888,7 +876,7 @@
         },
         {
             "key": "ui.device.cutter.fault",
-            "text": "Cần bộ đánh lửa. Lắp khi đỗ trên bệ sạc."
+            "text": "Thiếu bộ đánh lửa"
         },
         {
             "key": "ui.device.cutter.fit",
@@ -908,7 +896,7 @@
         },
         {
             "key": "ui.device.state.cutter_ready",
-            "text": "Sẵn sàng lắp bộ đánh lửa"
+            "text": "Lắp được bộ đánh lửa"
         },
         {
             "key": "ui.device.state.ok",
@@ -916,11 +904,11 @@
         },
         {
             "key": "pickup.part.feedunit",
-            "text": "Bộ cấp nguồn trạm chuyển tiếp"
+            "text": "Bộ cấp nguồn trạm tiếp sóng"
         },
         {
             "key": "pickup.part.feedunit.job",
-            "text": "Lắp vào hộp cột của relay.1."
+            "text": "Lắp vào hộp cột Trạm 1"
         },
         {
             "key": "pickup.part.igniter",
@@ -928,7 +916,7 @@
         },
         {
             "key": "pickup.part.igniter.job",
-            "text": "Lắp vào mỏ cắt khi đỗ trên bệ."
+            "text": "Lắp vào mỏ cắt"
         },
         {
             "key": "pickup.habitat.power_module",
@@ -940,7 +928,7 @@
         },
         {
             "key": "ui.readout.power_off",
-            "text": "NGUỒN · NGOẠI TUYẾN"
+            "text": "NGUỒN · TẮT"
         },
         {
             "key": "ui.readout.scan_set",
@@ -980,7 +968,7 @@
         },
         {
             "key": "hint.openbuild",
-            "text": "Xây dựng"
+            "text": "Xây"
         },
         {
             "key": "hint.fitpart",
@@ -988,11 +976,11 @@
         },
         {
             "key": "rack.headlamp",
-            "text": "Đèn pha SSR-3 · từ đơn vị 06"
+            "text": "Đèn pha SSR-3 · từ 06"
         },
         {
             "key": "rack.cell_pack",
-            "text": "Khối pin · từ đơn vị 06"
+            "text": "Khối pin · từ 06"
         },
         {
             "key": "rack.hex_adapter",
@@ -1008,7 +996,7 @@
         },
         {
             "key": "hint.transmit",
-            "text": "Phát tín hiệu"
+            "text": "Phát sóng"
         },
         {
             "key": "pickup.crate.contents",
@@ -1020,11 +1008,11 @@
         },
         {
             "key": "pickup.for.solar_array",
-            "text": "cho giàn pin mặt trời"
+            "text": "cho dàn pin mặt trời"
         },
         {
             "key": "pickup.for.battery_bank",
-            "text": "cho cụm pin tích điện"
+            "text": "cho bộ tích điện"
         },
         {
             "key": "pickup.for.antenna_mast",
@@ -1052,7 +1040,7 @@
         },
         {
             "key": "ui.face.no_line",
-            "text": "BỊ CHE KHUẤT"
+            "text": "KHÔNG THẤY ĐƯỜNG"
         },
         {
             "key": "ui.face.tx_ready",
@@ -1060,7 +1048,7 @@
         },
         {
             "key": "ui.face.ack_route",
-            "text": "ACK · RELAY.1 · TUYẾN · ĐĨA ĐỈNH NÚI · NGẮT"
+            "text": "ACK · TRẠM 1 · TUYẾN TỚI CHẢO ĐỈNH · MẤT"
         },
         {
             "key": "ui.face.call",
@@ -1072,7 +1060,7 @@
         },
         {
             "key": "ui.verb.build",
-            "text": "Xây dựng"
+            "text": "Xây"
         },
         {
             "key": "ui.verb.fit",
@@ -1104,11 +1092,11 @@
         },
         {
             "key": "ui.face.build",
-            "text": "Xây dựng"
+            "text": "Xây"
         },
         {
             "key": "ui.cargo.drag.not_docked",
-            "text": "Chỉ lắp được khi đỗ trên bệ sạc"
+            "text": "Chỉ lắp khi đỗ trên bệ sạc"
         },
         {
             "key": "ui.cargo.drag.to_cutter",
@@ -1116,11 +1104,11 @@
         },
         {
             "key": "ui.cargo.igniter.fit_hint",
-            "text": "Kéo vào mỏ cắt, hoặc bấm E"
+            "text": "Kéo vào mỏ cắt hoặc bấm E"
         },
         {
             "key": "ui.cargo.drag.nowhere",
-            "text": "07 chưa có chỗ lắp món này"
+            "text": "Chưa lắp được món này"
         },
         {
             "key": "ui.cargo.release_fit",
@@ -1180,7 +1168,7 @@
         },
         {
             "key": "build.step.place",
-            "text": "Lái đến vạch sáng trên sân rồi bấm {0} để đặt"
+            "text": "Lái tới vạch sáng, bấm {0} để đặt"
         },
         {
             "key": "build.step.weld",
@@ -1379,6 +1367,14 @@
             "text": "TYCHO"
         },
         {
+            "key": "ui.maker.bar",
+            "text": "{0} {1} · tiếp theo: {2}"
+        },
+        {
+            "key": "adapted.ssr3_lamp.name",
+            "text": "Đèn pha SSR-3"
+        },
+        {
             "key": "db.no_record",
             "text": "KHÔNG CÓ HỒ SƠ LUMEN"
         },
@@ -1412,7 +1408,7 @@
         },
         {
             "key": "db.elder06.readout",
-            "text": "SSR-3 · ĐƠN VỊ 06 · GIỮ TRẠM TIẾP SÓNG · NHIỆM VỤ: GIỮ LIÊN LẠC RELAY.2 · DỪNG: PIN 0%"
+            "text": "SSR-3 · XE 06 · GIỮ TRẠM 2 · PIN 0% · DỪNG"
         },
         {
             "key": "db.elder06.history",
@@ -1468,7 +1464,7 @@
         },
         {
             "key": "db.solar_array.name",
-            "text": "Giàn pin mặt trời đổ"
+            "text": "Dàn pin mặt trời đổ"
         },
         {
             "key": "db.solar_array.readout",
@@ -1476,7 +1472,7 @@
         },
         {
             "key": "db.solar_array.history",
-            "text": "Giàn pin chính của Lumen. Ở vùng cực, Mặt Trời chẳng bao giờ lên cao, nên giàn xoay suốt ngày, đuổi theo nó quanh đường chân trời. — K."
+            "text": "Dàn pin chính của Lumen. Ở vùng cực, Mặt Trời chẳng bao giờ lên cao, nên dàn xoay suốt ngày, đuổi theo nó quanh đường chân trời. — K."
         },
         {
             "key": "db.radio_tower.name",
@@ -1528,7 +1524,7 @@
         },
         {
             "key": "db.lumen.name",
-            "text": "Tàn tích Lumen"
+            "text": "Phế tích Lumen"
         },
         {
             "key": "db.lumen.readout",
@@ -1616,7 +1612,7 @@
         },
         {
             "key": "elder.06.manifest",
-            "text": "SSR-3 · ĐƠN VỊ 06 · GIỮ TRẠM TIẾP SÓNG · NHIỆM VỤ: GIỮ LIÊN LẠC RELAY.2 · DỪNG: PIN 0%"
+            "text": "SSR-3 · XE 06 · GIỮ TRẠM 2 · PIN 0% · DỪNG"
         },
         {
             "key": "notes.unit07",

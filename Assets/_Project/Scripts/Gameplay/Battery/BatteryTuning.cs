@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
         [Header("Driving")]
         [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are " +
                  "free.")]
-        [Range(30f, 600f)] [SerializeField] private float _metresPerCell = 200f;
+        [Range(30f, 600f)] [SerializeField] private float _metresPerCell = 220f;
 
         [Tooltip("Driving cost multiplier on an uphill at or steeper than the full slope.")]
         [Range(1f, 3f)] [SerializeField] private float _uphillMultiplier = 1.5f;

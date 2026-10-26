@@ -274,6 +274,35 @@ namespace MoonProject.Gameplay.Tests
             field.Dispose();
         }
 
+        [Test]
+        public void AChargeShortOfTheRelayTrip_ShowsTheRingAgain_WithTheRelayOutsideIt()
+        {
+            var events = new EventBus();
+            var shown = new List<RangeRingShown>();
+            events.Subscribe<RangeRingShown>(shown.Add);
+            var rover = new FakeRover();
+            var battery = new BatteryModel(_battery, events);
+            var relay = new Vector3(1.5f * _battery.MetresPerCell, 0f, 0f);
+            float trip = _model.PathCost(rover.Position, relay, _settings.PathStepMetres);
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = trip + 0.1f * battery.Cells });
+            Assert.IsFalse(RelayTrip.Covered(battery.Charge, battery.Cells, battery.CellsFull, trip, 0.2f),
+                "a tenth of the battery to spare, under a fifth: charge first");
+            var field = new RangeRingField(events, _settings, _model, battery, new FakePoints(), rover,
+                new FakeLink { Shown = true, Node = relay });
+            field.Show(RangeRingMode.Full);
+            field.Step(_settings.FullSeconds + 1f);
+
+            field.ShowShortfall();
+            Assert.IsTrue(field.IsShown, "a moment of its own, after the release ring");
+            Assert.AreEqual(RangeRingMode.Full, field.Mode);
+            Assert.AreEqual(2, shown.Count);
+            Assert.Less(Radius(field.Point(East), Vector3.zero), relay.x - StepSlack,
+                "toward relay.1 the ring stops short of it: the reason to charge reads");
+            Assert.IsTrue(field.TryGetLink(out _, out Vector3 node, out _));
+            Assert.AreEqual(relay, node, "relay.1's link shows with the ring, so its place is seen");
+            field.Dispose();
+        }
+
         private static float Radius(Vector3 point, Vector3 centre)
         {
             Vector3 flat = point - centre;
