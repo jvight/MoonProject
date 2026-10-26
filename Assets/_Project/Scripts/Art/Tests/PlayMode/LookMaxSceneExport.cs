@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -20,6 +21,7 @@ namespace MoonProject.Art.PlayModeTests
     {
         private const int SkyQueue = 2900;
         private const float ParkedBeyond = 5000f;
+        private const string NearRubble = "Rubble";
         private static readonly string[] SkippedShaderWords = { "Sky", "Earth", "Glint", "Halo", "Beacon", "Hologram" };
 
         /// <summary>Writes scene.obj and scene.mtl into <paramref name="folder"/>; returns a summary line.</summary>
@@ -69,7 +71,9 @@ namespace MoonProject.Art.PlayModeTests
         {
             mesh = null;
             baked = false;
-            if (!renderer.enabled || renderer.sharedMaterial == null || !IsSolid(renderer.sharedMaterial))
+            // The near rubble's stones are laid out in a vertex format the GPU read-back does not decode; it is left out
+            if (!renderer.enabled || renderer.sharedMaterial == null || !IsSolid(renderer.sharedMaterial) ||
+                renderer.name.StartsWith(NearRubble, StringComparison.Ordinal))
             {
                 return false;
             }
