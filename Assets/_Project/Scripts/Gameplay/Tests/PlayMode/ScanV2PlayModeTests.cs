@@ -1076,8 +1076,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             _view = _context.Get<IViewCamera>().Camera;
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
             yield return Until(() => _awake, WakeTimeout, "07 wakes up");
-            // These captures compare 07's body colour across a scan from one viewpoint: the Gentle camera holds it.
-            _cameraRig.GentleCamera = true;
             if (_cameraRig.Opening.IsActive)
             {
                 Set(_gamepad.rightStick, new Vector2(0.8f, 0f));

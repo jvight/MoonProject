@@ -46,7 +46,6 @@ namespace MoonProject.Rover
         private const float MinOrbitShare = 0.05f;
 
         /// <summary>The tow's sideways swing follows its solution with a half-life this many times shorter than its ease.</summary>
-        private const float TowYawHalfLivesPerEase = 3f;
 
         /// <summary>The dock frame looks toward 07's right (deg from its heading): the camera sits behind-left of it.</summary>
         private const float DockSideDegrees = 90f;
@@ -98,25 +97,6 @@ namespace MoonProject.Rover
         private bool _crawling;
         private float _crawl;
         private bool _towing;
-        private float _towT;
-        private bool _towSolved;
-        private IRoverRig _lens;
-        private bool _scanning;
-        private Vector3 _scanPoint;
-        private float _scanT;
-        private float _scanYaw;
-        private float _scanYawVelocity;
-        private float _scanSide;
-        private bool _scanSideClear;
-        private Bounds _towBounds;
-        private bool _towBoundsKnown;
-        private Vector3 _towLook;
-        private float _towElevation;
-        private float _towScale = 1f;
-        private float _towYaw;
-        private float _towYawVelocity;
-        private float _towYawT;
-        private float _towSide = 1f;
         private ITowLine _towLine;
         private Renderer[] _towRenderers = System.Array.Empty<Renderer>();
         private float _freeLook;
@@ -274,7 +254,6 @@ namespace MoonProject.Rover
             _nearFade = new NearPropFade();
             _faceCloseDip = new FaceCloseDip(transform, _tuning.FaceCloseDarkExposure);
             _rover = context.Get<IRoverState>();
-            _lens = context.Get<IRoverRig>();
             _world = context.Get<IWorldLayout>();
             context.TryGet(out _anchors);
             _stillness = context.Get<IRoverStillness>();
@@ -323,9 +302,6 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
                 context.Events.Subscribe<FacePageChanged>(OnFacePageChanged),
                 context.Events.Subscribe<RoverDockChanged>(OnDockChanged),
-                context.Events.Subscribe<ScanStarted>(OnScanStarted),
-                context.Events.Subscribe<ScanStopped>(_ => _scanning = false),
-                context.Events.Subscribe<FragmentScanned>(_ => _scanning = false),
                 context.Events.Subscribe<BuildPlacingChanged>(OnBuildPlacingChanged),
             };
             context.Register<IViewCamera>(this);
@@ -569,9 +545,6 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
-            StepTowBounds(deltaTime);
-            _scanT = Mathf.MoveTowards(_scanT, _scanning ? 1f : 0f, deltaTime / _tuning.ScanFramingEaseSeconds);
-            StepTowLook(deltaTime);
             _beam.Framing.Step(deltaTime);
             StepReleaseCarry(deltaTime);
             bool externalYaw = _buildFraming.DidBearingChangeExternally(_orbitState.Bearing);
@@ -585,8 +558,6 @@ namespace MoonProject.Rover
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
-            _towT = Mathf.MoveTowards(_towT, _towing ? 1f : 0f, deltaTime / _tuning.TowEaseSeconds);
-            _towYawT = Mathf.MoveTowards(_towYawT, _towing ? 1f : 0f, deltaTime / _tuning.TowYawEaseSeconds);
             ApplyOrbit();
             StepNearFade(deltaTime);
         }
@@ -980,7 +951,7 @@ namespace MoonProject.Rover
         private void PlaceTarget(float deltaTime = 0f, bool snap = true)
         {
             float targetHeight = _tuning.TargetHeight + _wallCompression * _tuning.WallMaxTargetLift;
-            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _towLook + _buildFraming.LookShift;
+            Vector3 point = _rover.Position + Vector3.up * targetHeight + _momentShift + _framing.Shift + _buildFraming.LookShift;
             float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
@@ -1045,108 +1016,11 @@ namespace MoonProject.Rover
                 elevation = Mathf.Lerp(elevation, _tuning.DefaultPitch, _moment.Weight);
             }
             radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack) * (1f + _buildFraming.PullBack);
-            if (_towT > 0f || _towYawT > 0f)
-            {
-                BlendTowFraming(ref yaw, ref elevation, ref radius);
-            }
-
-            if (_scanT > 0f || _scanYaw != 0f)
-            {
-                BlendScanFraming(ref yaw, ref elevation, ref radius);
-            }
-
             float cutFrame = _beam.Framing.Weight;
             if (cutFrame > 0f)
             {
                 BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
             }
-        }
-
-        private void OnScanStarted(ScanStarted started)
-        {
-            _scanning = true;
-            _scanPoint = started.Point;
-            _scanSide = 0f;
-            _scanSideClear = true;
-        }
-
-        /// <summary>
-        /// While 07 scans, the view swings round to look across the beam instead of down it from behind 07 (whose body
-        /// hides it), rises a little, and for a target overhead draws back and lifts so it is seen and never looked up
-        /// into from inside its frame. Only for a close target (a far one is framed by the plain chase view) and not
-        /// for the Gentle camera.
-        /// </summary>
-        private void BlendScanFraming(ref float yaw, ref float elevation, ref float radius)
-        {
-            // The player's Gentle camera keeps the view where it is: no swing, no lift, no draw back.
-            float weight = _look != null && _look.GentleCamera ? 0f : Smoothing.SmoothStep(0f, 1f, _scanT);
-            Vector3 across = _scanPoint - _lens.ScanOrigin.position;
-            float above = across.y;
-            across.y = 0f;
-            float distance = across.magnitude;
-            float close = 1f - Smoothing.SmoothStep(_tuning.ScanCloseMetres, _tuning.ScanCloseMetres * 2f, distance);
-            float overhead = Smoothing.SmoothStep(0f, _tuning.ScanOverheadDegrees,
-                Mathf.Atan2(above, Mathf.Max(distance, 0.01f)) * Mathf.Rad2Deg);
-
-            float lookYaw = _targetYaw + yaw;
-            float beamYaw = Mathf.Atan2(across.x, across.z) * Mathf.Rad2Deg;
-            float sideA = beamYaw + 90f;
-            float sideB = beamYaw - 90f;
-            if (_scanSide == 0f)
-            {
-                _scanSide = ChooseScanSide(lookYaw, sideA, sideB);
-            }
-
-            float toSide = Mathf.DeltaAngle(lookYaw, _scanSide > 0f ? sideA : sideB);
-            float swing = _scanning && weight > 0f && distance > 0.01f
-                ? Mathf.Clamp(toSide, -_tuning.ScanMaxYawSwing, _tuning.ScanMaxYawSwing) * close
-                : 0f;
-            if (Time.deltaTime > 0f)
-            {
-                _scanYaw = Mathf.SmoothDampAngle(_scanYaw, swing, ref _scanYawVelocity,
-                    _tuning.ScanFramingEaseSeconds, _tuning.ScanYawMaxSpeed, Time.deltaTime);
-            }
-
-            if (_scanT <= 0f && Mathf.Abs(_scanYaw) < 0.01f)
-            {
-                _scanYaw = 0f;
-                _scanYawVelocity = 0f;
-            }
-
-            yaw += _scanYaw;
-            // Hard against a wall, where neither side is clear, the view looks down from higher instead.
-            float blocked = _scanSideClear ? 0f : _tuning.ScanBlockedLiftDegrees * close;
-            elevation += weight * (_tuning.ScanLiftDegrees * close + _tuning.ScanOverheadLiftDegrees * overhead + blocked);
-            radius *= 1f + weight * _tuning.ScanOverheadPullBack * overhead;
-        }
-
-        /// <summary>
-        /// The side of the beam the view looks across from: the one whose eye has the clearer sight line to 07 (the
-        /// target is often against a wall, and a view swung into it would be pulled straight back behind 07), the
-        /// nearer to the view's bearing when both are clear. Chosen once per scan so it never flips.
-        /// </summary>
-        private float ChooseScanSide(float lookYaw, float sideA, float sideB)
-        {
-            float distance = _tuning.Distance;
-            Vector3 follow = _target.position;
-            Vector3 eyeA = follow - Quaternion.Euler(0f, sideA, 0f) * Vector3.forward * distance;
-            Vector3 eyeB = follow - Quaternion.Euler(0f, sideB, 0f) * Vector3.forward * distance;
-            float reachA = SightReach(follow, eyeA, _tuning.CameraRadius);
-            float reachB = SightReach(follow, eyeB, _tuning.CameraRadius);
-            bool aClear = reachA >= distance;
-            bool bClear = reachB >= distance;
-            _scanSideClear = aClear || bClear;
-            if (aClear != bClear)
-            {
-                return aClear ? 1f : -1f;
-            }
-
-            if (!aClear && !bClear)
-            {
-                return reachA >= reachB ? 1f : -1f;
-            }
-
-            return Mathf.Abs(Mathf.DeltaAngle(lookYaw, sideA)) <= Mathf.Abs(Mathf.DeltaAngle(lookYaw, sideB)) ? 1f : -1f;
         }
 
         /// <summary>07 hooked a load: its renderers are the obstacle the chase camera keeps clear of.</summary>
@@ -1161,153 +1035,6 @@ namespace MoonProject.Rover
                 ? root.GetComponentsInChildren<Renderer>()
                 : System.Array.Empty<Renderer>();
             _towing = _towRenderers.Length > 0;
-            _towSolved = false;
-            _towBoundsKnown = false;
-        }
-
-        /// <summary>
-        /// While 07 tows, the look point moves part of the way from 07 toward the load (eased with the tow), so the
-        /// rope and the load stay in frame beside 07 instead of trailing out of the shot.
-        /// </summary>
-        private void StepTowLook(float deltaTime)
-        {
-            Vector3 wanted = Vector3.zero;
-            if (_towT > 0f && TowLoadBounds(out Bounds load))
-            {
-                float weight = _towT * _towT * (3f - 2f * _towT);
-                wanted = (load.center - _rover.Position) * (_tuning.TowLookShare * weight);
-            }
-
-            _towLook = Smoothing.Damp(_towLook, wanted, _tuning.TowSolveHalfLife, deltaTime);
-        }
-
-        /// <summary>
-        /// Follows the load's bounds with a damped copy: the load is a body stepped at the physics rate, and both the
-        /// look point and the clearance solve would step with it frame by frame.
-        /// </summary>
-        private void StepTowBounds(float deltaTime)
-        {
-            if (!RawTowLoadBounds(out Bounds raw))
-            {
-                _towBoundsKnown = false;
-                return;
-            }
-
-            if (!_towBoundsKnown)
-            {
-                _towBounds = raw;
-                _towBoundsKnown = true;
-                return;
-            }
-
-            _towBounds.center = Smoothing.Damp(_towBounds.center, raw.center, _tuning.TowBoundsHalfLife, deltaTime);
-            _towBounds.extents = Smoothing.Damp(_towBounds.extents, raw.extents, _tuning.TowBoundsHalfLife, deltaTime);
-        }
-
-        /// <summary>The smoothed bounds of everything the tow holds; false when it holds nothing.</summary>
-        private bool TowLoadBounds(out Bounds load)
-        {
-            load = _towBounds;
-            return _towBoundsKnown;
-        }
-
-        private bool RawTowLoadBounds(out Bounds load)
-        {
-            load = default;
-            bool hasLoad = false;
-            for (int i = 0; i < _towRenderers.Length; i++)
-            {
-                if (_towRenderers[i] == null)
-                {
-                    continue;
-                }
-
-                if (!hasLoad)
-                {
-                    load = _towRenderers[i].bounds;
-                    hasLoad = true;
-                }
-                else
-                {
-                    load.Encapsulate(_towRenderers[i].bounds);
-                }
-            }
-
-            return hasLoad;
-        }
-
-        /// <summary>
-        /// While 07 tows, the camera rises and draws back just enough to see 07 over the load behind it, with its eye
-        /// outside the load (<see cref="TowFraming"/>), eased in and out by the hook and the release; the player's own
-        /// swing of the view is the one it solves for, so they can still orbit freely.
-        /// </summary>
-        private void BlendTowFraming(ref float yaw, ref float elevation, ref float radius)
-        {
-            float weight = _towT * _towT * (3f - 2f * _towT);
-            float solvedElevation = elevation;
-            float solvedScale = 1f;
-            float solvedYaw = 0f;
-            if (TowLoadBounds(out Bounds load))
-            {
-                // One framing holds while it still clears the load: the grid solve picks the cheapest of many near-equal
-                // framings, and a load that shifts a few centimetres a frame would flip it between them (the view jerking
-                // back and forth). The plain chase view returns only once it clears with room to spare.
-                float cameraYaw = _targetYaw + yaw;
-                Bounds roomy = load;
-                roomy.Expand((_tuning.TowMargin + _tuning.TowRelaxMargin) * 2f);
-                Bounds snug = load;
-                snug.Expand(_tuning.TowMargin * 2f);
-                if (TowFraming.Clear(_target.position, cameraYaw, elevation, radius, roomy))
-                {
-                    solvedElevation = elevation;
-                }
-                else if (_towSolved && TowFraming.Clear(_target.position, cameraYaw + _towYaw, _towElevation,
-                             radius * _towScale, snug))
-                {
-                    solvedElevation = _towElevation;
-                    solvedScale = _towScale;
-                    solvedYaw = _towYaw;
-                }
-                else
-                {
-                    TowFraming.SolveSide(_target.position, cameraYaw, elevation, radius, load, _tuning.TowMargin,
-                        _tuning.TowMaxElevation, _tuning.TowMaxRadiusScale, _tuning.TowMaxYawSwing, _towSide,
-                        out solvedElevation, out solvedScale, out solvedYaw);
-                    if (solvedYaw != 0f)
-                    {
-                        _towSide = Mathf.Sign(solvedYaw);
-                    }
-                }
-            }
-
-            float follow = Time.deltaTime > 0f
-                ? Smoothing.Damp(0f, 1f, _tuning.TowSolveHalfLife, Time.deltaTime)
-                : 1f;
-            if (!_towSolved)
-            {
-                _towElevation = solvedElevation;
-                _towScale = solvedScale;
-                _towYaw = solvedYaw;
-                _towYawVelocity = 0f;
-                _towSolved = true;
-            }
-            else
-            {
-                _towElevation = Mathf.Lerp(_towElevation, solvedElevation, follow);
-                _towScale = Mathf.Lerp(_towScale, solvedScale, follow);
-                // A critically damped, speed-limited follow: a framing that flips to the load's other side is a step in
-                // the target, and an exponential lerp to a step changes the swing's speed at once (a kick); this
-                // keeps the speed continuous and never fast.
-                if (Time.deltaTime > 0f)
-                {
-                    _towYaw = Mathf.SmoothDampAngle(_towYaw, solvedYaw, ref _towYawVelocity,
-                        _tuning.TowYawEaseSeconds / TowYawHalfLivesPerEase, _tuning.TowYawMaxSpeed, Time.deltaTime);
-                }
-            }
-
-            elevation = Mathf.Lerp(elevation, _towElevation, weight);
-            radius *= 1f + weight * (_towScale - 1f);
-            yaw += _towYawT * _towYawT * (3f - 2f * _towYawT) * _towYaw;
         }
 
         /// <summary>
