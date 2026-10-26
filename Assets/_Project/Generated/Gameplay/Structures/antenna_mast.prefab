@@ -53,9 +53,9 @@ MonoBehaviour:
   - {fileID: 6542157943926261772}
   - {fileID: 6101246091403909979}
   _stageSeams:
-  - Start: {x: -0.36, y: 0.4061772, z: -0.32878035}
-    Middle: {x: 0, y: 0.4241772, z: -0.35878035}
-    End: {x: 0.36, y: 0.4061772, z: -0.32878035}
+  - Start: {x: -0.36, y: 0.40736222, z: -0.32878032}
+    Middle: {x: 0, y: 0.42536223, z: -0.35878032}
+    End: {x: 0.36, y: 0.40736222, z: -0.32878032}
     Normal: {x: 0, y: 0.86012906, z: -0.5100765}
   - Start: {x: -0.14919181, y: 1.3368206, z: -0.23521854}
     Middle: {x: 0.09202051, y: 1.3548206, z: -0.26521853}
@@ -114,7 +114,7 @@ Transform:
   m_GameObject: {fileID: 4485259647388984525}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.1489355, y: 2.1816807, z: 0}
+  m_LocalPosition: {x: 0.1489355, y: 2.1816812, z: 0.000000059604645}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
