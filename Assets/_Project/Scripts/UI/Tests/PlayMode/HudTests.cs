@@ -1201,7 +1201,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ALoadInHookReach_TeachesTheTetherKeyOnce_AtItsHitch()
+        public IEnumerator TheHitchChip_Stands_GetCloserDim_ThenHookCable_ThenReleaseWhileTowing()
         {
             InputSystem.AddDevice<Keyboard>();
             InputSystem.AddDevice<Mouse>();
@@ -1211,31 +1211,47 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             var hitch = new Vector3(1f, 0.5f, 4f);
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch, true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch, false);
             float limit = Time.realtimeSinceStartup + 4f;
             while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the chip shows at the load's hitch");
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "out of reach the chip already shows at the load's hitch");
+            Assert.AreEqual(Text(UiKeys.HintGetCloser), _rig.Ui.Layout.PromptWord.text, "Get closer");
+            Assert.Less(_rig.Ui.Layout.PromptWord.resolvedStyle.opacity, 1f, "dim: not yet a call to act");
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.PromptGlyph.style.display.value, "no key out of reach");
+
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch, true);
+            yield return Seconds(0.2f);
             Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Tether)), _rig.Ui.Layout.PromptWord.text, "Hook cable");
+            Assert.AreEqual(1f, _rig.Ui.Layout.PromptWord.resolvedStyle.opacity, "in reach it reads bright");
+            Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.PromptGlyph.style.display.value, "the key shows");
             Assert.AreEqual(Text("glyph.mouse.rightbutton"), _rig.Ui.Layout.PromptGlyphLabel.text, "the tether key");
             Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.PromptHoldRing.style.display.value, "a press, not a hold");
 
             Events.Publish(new TowAttached("habitat.power_module", hitch, 1f));
-            yield return Seconds(1.5f);
-            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "hooking a load ends the chip");
-
-            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            _rig.Fakes.IsTowing = true;
             yield return Seconds(0.5f);
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch + Vector3.right * 20f, true);
-            float until = Time.realtimeSinceStartup + 3f;
-            while (Time.realtimeSinceStartup < until)
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "hooked at home, the chip stays");
+            Assert.AreEqual(Text(UiKeys.HintTetherRelease), _rig.Ui.Layout.PromptWord.text, "Release cable");
+            Assert.AreEqual(Text("glyph.mouse.rightbutton"), _rig.Ui.Layout.PromptGlyphLabel.text, "the same key");
+
+            _rig.Fakes.IsTowing = false;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the hint gone, the chip goes");
+
+            // The controls card takes the free screen to show the hook key it added; the chip comes back after it.
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tether, hitch, false);
+            limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.Prompt.IsVisible && Time.realtimeSinceStartup < limit)
             {
-                Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "it teaches once: never again, even at another load");
                 yield return null;
             }
+
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "never retired: the next load shows it again");
         }
 
         [UnityTest]

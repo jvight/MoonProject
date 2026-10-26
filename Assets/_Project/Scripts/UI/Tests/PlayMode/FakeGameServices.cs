@@ -10,10 +10,10 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
     /// (initialised before the UI). Tests set the gameplay hint, the material stock, the station offer, the salvage
-    /// cut, the battery and the beam at work.
+    /// cut, the battery, the beam at work and the tow cable.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
-        IMaterialStock, IInteractionHints, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus
+        IMaterialStock, IInteractionHints, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus, ITowLine
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private float _sensitivity = 1f;
@@ -143,6 +143,21 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>The beam is at work (the cell row dims).</summary>
         public bool Working { get; set; }
 
+        /// <summary>The cable holds a load (the hitch chip offers its release).</summary>
+        public bool IsTowing { get; set; }
+
+        public Vector3 LoadHitch => Vector3.zero;
+
+        public float Length => 0f;
+
+        public float Strain01 => 0f;
+
+        public bool TryFindLoad(string towId, out Transform root)
+        {
+            root = null;
+            return false;
+        }
+
         public void Initialize(GameContext context)
         {
             _events = context.Events;
@@ -156,6 +171,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ISalvageStatus>(this);
             context.Register<IRoverBattery>(this);
             context.Register<IBeamStatus>(this);
+            context.Register<ITowLine>(this);
             context.Register<ICargoHold>(Hold);
             context.Register<IMaterialCatalog>(Catalog);
             context.Register<IRoverSystems>(Systems);
