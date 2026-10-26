@@ -66,6 +66,24 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TheBankOnAModuleParkedCloseToThePad_IsNoOverlap_OnlyARealOneIs_AndItNamesThePad()
+        {
+            StructureDefinition bank = _catalog.Find(StructureIds.BatteryBank);
+            StructureDefinition pad = _catalog.Find(StructureIds.ChargingPad);
+            var placed = new List<PlacedStructure> { new PlacedStructure(1, pad, new StructurePose(Vector3.zero, 0f)) };
+            float touching = pad.Width * 0.5f + bank.Width * 0.5f;
+            var close = new StructurePose(new Vector3(touching + pad.Clearance * 0.5f, 0f, 0f), 0f);
+            Assert.IsTrue(PlacementRules.Overlaps(bank, close, pad, placed[0].Pose),
+                "within the clearance a free-standing structure would keep");
+            Assert.AreEqual(-1, PlacementRules.FirstOverlap(bank, close, placed),
+                "on its module the bank stands where the module already stands: the clearance is not asked of it");
+
+            var into = new StructurePose(new Vector3(touching - 0.3f, 0f, 0f), 0f);
+            Assert.AreEqual(0, PlacementRules.FirstOverlap(bank, into, placed), "a real overlap still blocks it");
+            Assert.AreEqual("structure.charging_pad.name", placed[0].Definition.NameKey, "and names what is in the way");
+        }
+
+        [Test]
         public void TheModule_IsHomeOnlyOnTheApron_OffTheCable()
         {
             Assert.IsTrue(_tow.TryFindHome(TowLoads.PowerModule, out Transform root));

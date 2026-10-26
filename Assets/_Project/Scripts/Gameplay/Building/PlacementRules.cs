@@ -8,7 +8,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Pure, allocation-free placement validator (0.5.7). Checks play-area bounds, distance from 07, terrain slope
     /// across the structure's footprint, and oriented bounding-box (OBB) overlap including clearance against placed
-    /// structures.
+    /// structures. A structure built on a towed load (the battery bank on the power module) stands where its load
+    /// already stands: it is checked against the others' bare footprints, with no clearance either side, so a load
+    /// parked close to the base can still be built on.
     /// </summary>
     public static class PlacementRules
     {
@@ -77,20 +79,33 @@ namespace MoonProject.Gameplay
                 return terrainOrRange;
             }
 
-            if (placed != null)
+            return FirstOverlap(candidate, pose, placed) >= 0 ? PlacementReason.Overlaps : PlacementReason.Valid;
+        }
+
+        /// <summary>
+        /// The index in <paramref name="placed"/> of the first structure <paramref name="candidate"/> would overlap at
+        /// <paramref name="pose"/>, or -1: what a blocked placement names.
+        /// </summary>
+        public static int FirstOverlap(StructureDefinition candidate, StructurePose pose,
+            IReadOnlyList<PlacedStructure> placed)
+        {
+            if (candidate == null || placed == null)
             {
-                int count = placed.Count;
-                for (int i = 0; i < count; i++)
+                return -1;
+            }
+
+            bool clearance = !OnFrame(candidate);
+            int count = placed.Count;
+            for (int i = 0; i < count; i++)
+            {
+                PlacedStructure other = placed[i];
+                if (Overlaps(candidate, pose, other.Definition, other.Pose, clearance))
                 {
-                    PlacedStructure other = placed[i];
-                    if (Overlaps(candidate, pose, other.Definition, other.Pose))
-                    {
-                        return PlacementReason.Overlaps;
-                    }
+                    return i;
                 }
             }
 
-            return PlacementReason.Valid;
+            return -1;
         }
 
         /// <summary>
@@ -130,11 +145,12 @@ namespace MoonProject.Gameplay
 
             if (placed != null)
             {
+                bool clearance = !OnFrame(candidate);
                 int limit = Mathf.Min(placedCount, placed.Length);
                 for (int i = 0; i < limit; i++)
                 {
                     PlacedStructure other = placed[i];
-                    if (Overlaps(candidate, pose, other.Definition, other.Pose))
+                    if (Overlaps(candidate, pose, other.Definition, other.Pose, clearance))
                     {
                         return PlacementReason.Overlaps;
                     }
@@ -154,15 +170,27 @@ namespace MoonProject.Gameplay
             StructureDefinition b,
             StructurePose poseB)
         {
+            return Overlaps(a, poseA, b, poseB, true);
+        }
+
+        private static bool OnFrame(StructureDefinition definition) => definition.FrameLoad.Length > 0;
+
+        private static bool Overlaps(
+            StructureDefinition a,
+            StructurePose poseA,
+            StructureDefinition b,
+            StructurePose poseB,
+            bool clearance)
+        {
             if (a == null || b == null)
             {
                 return false;
             }
 
-            float hxA = a.Width * 0.5f + a.Clearance;
-            float hzA = a.Depth * 0.5f + a.Clearance;
-            float hxB = b.Width * 0.5f + b.Clearance;
-            float hzB = b.Depth * 0.5f + b.Clearance;
+            float hxA = a.Width * 0.5f + (clearance ? a.Clearance : 0f);
+            float hzA = a.Depth * 0.5f + (clearance ? a.Clearance : 0f);
+            float hxB = b.Width * 0.5f + (clearance ? b.Clearance : 0f);
+            float hzB = b.Depth * 0.5f + (clearance ? b.Clearance : 0f);
 
             Vector3 rightA = poseA.Right;
             Vector3 forwardA = poseA.Forward;

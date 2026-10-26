@@ -69,6 +69,9 @@ namespace MoonProject.Gameplay
         /// </summary>
         public const string TowModuleHome = "next.v3.tow_module";
 
+        /// <summary>B9, the power module towed within the apron's home radius: "Let the cable go here".</summary>
+        public const string UnhookModule = "next.v3.unhook_module";
+
         /// <summary>B9, the power module caught with the winch's slack all out: "Back up to free the cable."</summary>
         public const string FreeCable = "next.v3.free_cable";
 
@@ -114,6 +117,7 @@ namespace MoonProject.Gameplay
                 case BuildBatteryBank:
                     return RoverAction.Build;
                 case HookModule:
+                case UnhookModule:
                 case TowModuleHome:
                     return RoverAction.Tether;
                 default:

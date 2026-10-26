@@ -68,6 +68,12 @@ namespace MoonProject.Gameplay
 
         public PlacementReason CandidateReason { get; private set; }
 
+        /// <summary>
+        /// Localization key of the structure the candidate overlaps (its name), while
+        /// <see cref="CandidateReason"/> is <see cref="PlacementReason.Overlaps"/>; else <see cref="string.Empty"/>.
+        /// </summary>
+        public string CandidateBlockerNameKey { get; private set; } = string.Empty;
+
         public bool HasCandidatePoint { get; private set; }
 
         public bool CanAffordSelected =>
@@ -311,6 +317,7 @@ namespace MoonProject.Gameplay
                 HasCandidatePoint = false;
                 CandidateSnapped = false;
                 CandidateReason = PlacementReason.OutsidePlayArea;
+                CandidateBlockerNameKey = string.Empty;
                 return;
             }
 
@@ -349,6 +356,10 @@ namespace MoonProject.Gameplay
             CandidatePose = snappedPose;
             CandidateSnapped = snapped || apronSnapped;
             CandidateReason = reason;
+            int blocker = reason == PlacementReason.Overlaps
+                ? PlacementRules.FirstOverlap(SelectedStructure, snappedPose, _placedBase.Structures)
+                : -1;
+            CandidateBlockerNameKey = blocker >= 0 ? _placedBase.Structures[blocker].Definition.NameKey : string.Empty;
         }
 
         /// <summary>
@@ -359,6 +370,7 @@ namespace MoonProject.Gameplay
             HasCandidatePoint = false;
             CandidateSnapped = false;
             CandidateReason = fallbackReason;
+            CandidateBlockerNameKey = string.Empty;
         }
 
         /// <summary>
