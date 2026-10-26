@@ -193,7 +193,7 @@ namespace MoonProject.Art.PlayModeTests
             view.enabled = false;
             try
             {
-                foreach (string profileName in new[] { LookMaxProfile.Shipped, LookMaxProfile.Max, LookMaxProfile.Stp })
+                foreach (string profileName in LookMaxProfile.All)
                 {
                     var host = new GameObject("LookMaxCamera " + profileName);
                     Camera camera = host.AddComponent<Camera>();
@@ -246,6 +246,67 @@ namespace MoonProject.Art.PlayModeTests
 
             File.WriteAllText(Path.Combine(folder, "timing.txt"), timing.ToString());
             Debug.Log("[look-max] stills " + folder + "\n" + timing);
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// Renders the vista's camera move by day C, one frame per player frame (so TAA sees real motion), as a JPEG
+        /// sequence per profile (shipped and max); tools/art/look_max_video.py encodes them to MP4.
+        /// </summary>
+        [UnityTest]
+        [Timeout(7200000)]
+        [PrebuildSetup(typeof(LookMaxScene))]
+        [PostBuildCleanup(typeof(LookMaxScene))]
+        public IEnumerator Move_IsRendered_FrameByFrame()
+        {
+            LookMaxVista vista = LookMaxVista.Load();
+            string folder = Path.Combine(OutputRoot, "move-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            yield return Boot();
+            GameContext context = _bootstrap.Context;
+            var sky = (SkyCycleSystem)context.Get<ISunlight>();
+            yield return StageVista(vista, context);
+            Camera view = context.Get<IViewCamera>().Camera;
+            int frames = Mathf.RoundToInt(vista.move.seconds * vista.move.fps);
+            view.enabled = false;
+            try
+            {
+                foreach (string profileName in new[] { LookMaxProfile.Shipped, LookMaxProfile.Max })
+                {
+                    var host = new GameObject("LookMaxMoveCamera " + profileName);
+                    Camera camera = host.AddComponent<Camera>();
+                    camera.CopyFrom(view);
+                    camera.enabled = false;
+                    LookMaxShots.CopyPipelineSettings(view, camera);
+                    var profile = new LookMaxProfile(profileName, camera);
+                    var shots = new LookMaxShots(camera, vista.width, vista.height);
+                    try
+                    {
+                        sky.SetClockTime(vista.dayClock);
+                        profile.FollowSun();
+                        vista.AimMove(camera, 0f, Ground);
+                        yield return shots.Shoot(vista.settleFrames,
+                            Path.Combine(folder, profileName, "warmup.jpg"));
+                        for (int i = 0; i < frames; i++)
+                        {
+                            vista.AimMove(camera, i / (float)(frames - 1), Ground);
+                            shots.RenderAndSave(Path.Combine(folder, profileName, $"frame_{i:0000}.jpg"));
+                            yield return null;
+                        }
+                    }
+                    finally
+                    {
+                        shots.Dispose();
+                        profile.Dispose();
+                        Object.Destroy(host);
+                    }
+                }
+            }
+            finally
+            {
+                view.enabled = true;
+            }
+
+            Debug.Log("[look-max] move " + folder);
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 

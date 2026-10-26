@@ -9,8 +9,9 @@ namespace MoonProject.Art.PlayModeTests
     /// One render profile of the look spike, applied at runtime only: "shipped" leaves the game's pipeline as it is;
     /// "max" swaps in a clone of the URP asset (8K main-light shadows packed into a shorter, near-weighted cascade
     /// range, tighter biases), gives the capture camera high-quality sharpened TAA, screen-space contact shadows
-    /// (<see cref="LookMaxContactShadows"/>) and a regolith bounce fill (<see cref="LookMaxBounceLight"/>); "stp" is
-    /// "max" rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original asset
+    /// (<see cref="LookMaxContactShadows"/>), a regolith bounce fill (<see cref="LookMaxBounceLight"/>) and denser
+    /// near terrain detail (<see cref="LookMaxTerrainDetail"/>); "aces" is "max" tone-mapped by ACES instead of the
+    /// game's Neutral, a little brighter; "stp" is "max" rendered at a lower scale and upscaled by STP. Nothing is saved: <see cref="Dispose"/> puts the original asset
     /// back.
     /// </summary>
     public sealed class LookMaxProfile : System.IDisposable
@@ -18,6 +19,10 @@ namespace MoonProject.Art.PlayModeTests
         public const string Shipped = "shipped";
         public const string Max = "max";
         public const string Stp = "stp";
+        public const string Aces = "aces";
+
+        /// <summary>Every profile, in the order the session shoots them.</summary>
+        public static readonly string[] All = { Shipped, Max, Aces, Stp };
 
         private const int MaxShadowResolution = 8192;
         private const float MaxShadowDistance = 220f;
@@ -26,11 +31,16 @@ namespace MoonProject.Art.PlayModeTests
         private const float MaxNormalBias = 0.3f;
         private const float StpRenderScale = 0.67f;
         private const float TaaSharpening = 0.5f;
+        private const int OverrideVolumePriority = 1000;
+        private const float AcesExposure = 0.35f;
 
         private readonly RenderPipelineAsset _original;
         private readonly UniversalRenderPipelineAsset _clone;
         private readonly LookMaxContactShadows _contactShadows;
         private readonly LookMaxBounceLight _bounce;
+        private readonly LookMaxTerrainDetail _terrain;
+        private readonly GameObject _volumeHost;
+        private readonly VolumeProfile _volumeProfile;
 
         public LookMaxProfile(string name, Camera camera)
         {
@@ -42,7 +52,7 @@ namespace MoonProject.Art.PlayModeTests
                 return;
             }
 
-            if (name != Max && name != Stp)
+            if (name != Max && name != Stp && name != Aces)
             {
                 throw new System.ArgumentException($"Unknown look-max profile '{name}'.", nameof(name));
             }
@@ -69,6 +79,18 @@ namespace MoonProject.Art.PlayModeTests
             data.taaSettings.contrastAdaptiveSharpening = TaaSharpening;
             _contactShadows = new LookMaxContactShadows(camera);
             _bounce = LookMaxBounceLight.Create();
+            _terrain = new LookMaxTerrainDetail();
+            if (name == Aces)
+            {
+                _volumeHost = new GameObject("LookMaxAcesVolume");
+                var volume = _volumeHost.AddComponent<Volume>();
+                volume.isGlobal = true;
+                volume.priority = OverrideVolumePriority;
+                _volumeProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+                _volumeProfile.Add<Tonemapping>(true).mode.Override(TonemappingMode.ACES);
+                _volumeProfile.Add<ColorAdjustments>(true).postExposure.Override(AcesExposure);
+                volume.sharedProfile = _volumeProfile;
+            }
         }
 
         public string Name { get; }
@@ -93,6 +115,12 @@ namespace MoonProject.Art.PlayModeTests
             Object.Destroy(_clone);
             _contactShadows.Dispose();
             Object.Destroy(_bounce.gameObject);
+            _terrain.Dispose();
+            if (_volumeHost != null)
+            {
+                Object.Destroy(_volumeHost);
+                Object.Destroy(_volumeProfile);
+            }
         }
     }
 }
