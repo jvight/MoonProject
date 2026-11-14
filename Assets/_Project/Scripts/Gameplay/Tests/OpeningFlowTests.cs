@@ -641,6 +641,46 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Shown);
         }
 
+        [Test]
+        public void TheModuleCaughtPastTheSlack_SaysBackUpToFreeTheCable_AndOnceFreeTheTowSaysNothingMore()
+        {
+            _game.ReachedLander = true;
+            _game.Known.Add(StructureIds.ChargingPad);
+            _game.Known.Add(StructureIds.SolarArray);
+            _game.BuiltIds.Add(StructureIds.ChargingPad);
+            _game.FirstCharge = true;
+            _game.IgniterFitted = true;
+            _game.ReserveSpent = true;
+            _game.PowerOn = true;
+            _game.DuskBegun = true;
+            _game.Known.Add(StructureIds.BatteryBank);
+            _game.ModuleHooked = true;
+            _flow.Tick(1f);
+            Tick(NextLine);
+            Assert.AreEqual(string.Empty, _flow.Shown, "towing home, the tow line has had its say");
+
+            _game.ModuleSnagged = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.FreeCable, _flow.Shown, "caught past the slack: back up to free the cable");
+            Assert.AreEqual(NextLineReason.Next, _changes[_changes.Count - 1].Reason);
+            Assert.AreEqual(default(RoverAction), _changes[_changes.Count - 1].Key, "plain words, no key chip");
+            Tick(NextLine * 3);
+            Assert.AreEqual(OpeningKeys.FreeCable, _flow.Shown, "it holds while the module is still caught");
+
+            int lines = _lines.Count;
+            _game.ModuleSnagged = false;
+            _flow.Tick(1f);
+            Assert.AreEqual(string.Empty, _flow.Shown, "freed: the line goes");
+            Tick(Again + Stall);
+            Assert.IsFalse(_lines.GetRange(lines, _lines.Count - lines).Contains(OpeningKeys.TowModuleHome),
+                "and the tow-home line is never said again on this tow");
+
+            _game.ModuleHooked = false;
+            _game.ModuleHome = true;
+            _flow.Tick(1f);
+            Assert.AreEqual(OpeningKeys.BuildBatteryBank, _flow.Shown, "home: the next step speaks as usual");
+        }
+
         private void Tick(int seconds)
         {
             for (int i = 0; i < seconds; i++)
@@ -680,6 +720,7 @@ namespace MoonProject.Gameplay.Tests
             public bool NightFallen { get; set; }
             public bool DuskVisited { get; set; }
             public bool ModuleHooked { get; set; }
+            public bool ModuleSnagged { get; set; }
             public bool ModuleHome { get; set; }
             public bool AnswerDone { get; set; }
             public bool AnswerStarted { get; set; }

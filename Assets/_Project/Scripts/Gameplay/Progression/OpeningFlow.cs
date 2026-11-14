@@ -52,6 +52,7 @@ namespace MoonProject.Gameplay
         private readonly IDisposable[] _subscriptions;
         private bool _woke;
         private bool _progressed;
+        private bool _snaggedThisTow;
         private bool _docked;
         private int _dockShownIndex = -1;
         private Vector3 _rover;
@@ -160,8 +161,20 @@ namespace MoonProject.Gameplay
             return !_game.Knows(StructureIds.BatteryBank) ? OpeningKeys.ScanModule
                 : _game.Built(StructureIds.BatteryBank) ? OpeningKeys.MoveBatteryBank
                 : _game.ModuleHome ? OpeningKeys.BuildBatteryBank
-                : _game.ModuleHooked ? OpeningKeys.TowModuleHome
+                : _game.ModuleHooked ? TowLine()
                 : OpeningKeys.HookModule;
+        }
+
+        /// <summary>
+        /// On the cable: the tow-home line, or, while the module is caught past the winch's slack, the line to back up
+        /// and free it. Once freed the tow says nothing more: the way home is already known, and a line never repeats.
+        /// </summary>
+        private string TowLine()
+        {
+            _snaggedThisTow |= _game.ModuleSnagged;
+            return _game.ModuleSnagged ? OpeningKeys.FreeCable
+                : _snaggedThisTow ? string.Empty
+                : OpeningKeys.TowModuleHome;
         }
 
         /// <summary>The key of the line the current step would say, or empty when it has none (not shown).</summary>
@@ -214,6 +227,7 @@ namespace MoonProject.Gameplay
                 Announce();
             }
 
+            _snaggedThisTow &= _game.ModuleHooked;
             _steps.Tick();
             Speak(deltaTime);
             Reach(false);
@@ -324,7 +338,8 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private static bool HoldsUntilDone(string key) => key == OpeningKeys.HookModule;
+        private static bool HoldsUntilDone(string key) =>
+            key == OpeningKeys.HookModule || key == OpeningKeys.FreeCable;
 
         /// <summary>
         /// A part was taken: progress, and a line that only asked for the take (the spare igniter from the rack) goes
