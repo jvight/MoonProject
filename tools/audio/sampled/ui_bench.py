@@ -51,56 +51,56 @@ def _gesture(seconds: float, layers) -> np.ndarray:
 
 
 def cursor_move(lib, gen, variant: int) -> np.ndarray:
-    """The cursor moving: v1, one detent of the radio's mode wheel; v2, the fan dial's lighter click with a breath of
-    A5 under it."""
+    """The cursor moving: v1, one detent of the radio's mode wheel (slowed a touch so its ring sits on A4); v2, the
+    fan dial's lighter click (raised so its body rings on D4) with a breath of A5 under it."""
     if variant == 0:
-        return _gesture(0.075, [(_part(lib, "radio_wheel", 0.07), 0.0, 0.8)])
-    return _gesture(0.09, [(_part(lib, "fan_dial", 0.07, 1.1), 0.0, 0.7), (_ring(lib, "A5", 0.08), 0.004, 0.15)])
+        return _gesture(0.075, [(_part(lib, "radio_wheel", 0.07, 0.944), 0.0, 0.8)])
+    return _gesture(0.09, [(_part(lib, "fan_dial", 0.07, 1.2), 0.0, 0.7), (_ring(lib, "A5", 0.08), 0.004, 0.06)])
 
 
 def confirm(lib, gen, variant: int) -> np.ndarray:
     """Confirming: v1, the radio's power button pressed home and metal ringing D4 then A4; v2, a vintage double click
     with a single soft ring on D5."""
     if variant == 0:
-        return _gesture(0.34, [(_part(lib, "radio_power", 0.12), 0.0, 0.7), (_ring(lib, "D4", 0.2), 0.015, 0.35),
-                               (_ring(lib, "A4", 0.24), 0.075, 0.4)])
-    return _gesture(0.3, [(_part(lib, "vintage_click", 0.15), 0.0, 0.8), (_ring(lib, "D5", 0.25), 0.03, 0.25)])
+        return _gesture(0.34, [(_part(lib, "radio_power", 0.12), 0.0, 0.7), (_ring(lib, "D4", 0.2), 0.015, 0.14),
+                               (_ring(lib, "A4", 0.24), 0.075, 0.16)])
+    return _gesture(0.3, [(_part(lib, "vintage_click", 0.15), 0.0, 0.8), (_ring(lib, "D5", 0.25), 0.03, 0.1)])
 
 
 def cancel(lib, gen, variant: int) -> np.ndarray:
     """Backing out: v1, the lamp switch springing back and metal settling A4 then D4; v2, a light latch letting go
     and one low ring on D4."""
     if variant == 0:
-        return _gesture(0.32, [(_part(lib, "lamp_switch", 0.14), 0.0, 0.7), (_ring(lib, "A4", 0.18), 0.015, 0.3),
-                               (_ring(lib, "D4", 0.22), 0.078, 0.35)])
-    return _gesture(0.3, [(_part(lib, "latch_thunk", 0.15, 1.2), 0.0, 0.7), (_ring(lib, "D4", 0.26), 0.02, 0.25)])
+        return _gesture(0.32, [(_part(lib, "lamp_switch", 0.14), 0.0, 0.7), (_ring(lib, "A4", 0.18), 0.015, 0.12),
+                               (_ring(lib, "D4", 0.22), 0.078, 0.14)])
+    return _gesture(0.3, [(_part(lib, "latch_thunk", 0.15, 1.2), 0.0, 0.7), (_ring(lib, "D4", 0.26), 0.02, 0.1)])
 
 
 def toast(lib, gen, variant: int) -> np.ndarray:
     """A notice arriving: v1, a small relay and metal ringing B4 then F#5; v2, the tape measure's spring catching and
     one ring on A4."""
     if variant == 0:
-        return _gesture(0.38, [(_part(lib, "relay_click", 0.1), 0.0, 0.6), (_ring(lib, "B4", 0.2), 0.028, 0.3),
-                               (_ring(lib, "F#5", 0.26), 0.088, 0.35)])
-    return _gesture(0.36, [(_part(lib, "tape_spring", 0.12), 0.0, 0.5), (_ring(lib, "A4", 0.3), 0.03, 0.3)])
+        return _gesture(0.38, [(_part(lib, "relay_click", 0.1), 0.0, 0.6), (_ring(lib, "B4", 0.2), 0.028, 0.12),
+                               (_ring(lib, "F#5", 0.26), 0.088, 0.14)])
+    return _gesture(0.36, [(_part(lib, "tape_spring", 0.12), 0.0, 0.5), (_ring(lib, "A4", 0.3), 0.03, 0.12)])
 
 
 def panel_open(lib, gen, variant: int) -> np.ndarray:
     """A panel opening: v1, an instrument case's latch lifting and metal rising A4 then D5; v2, the typewriter
     carriage sliding a notch and one ring on D5."""
     if variant == 0:
-        return _gesture(0.3, [(_part(lib, "case_latch", 0.16, 1.1), 0.0, 0.7), (_ring(lib, "A4", 0.16), 0.022, 0.3),
-                              (_ring(lib, "D5", 0.2), 0.08, 0.35)])
-    return _gesture(0.3, [(_part(lib, "typewriter_carriage", 0.16), 0.0, 0.6), (_ring(lib, "D5", 0.22), 0.05, 0.25)])
+        return _gesture(0.3, [(_part(lib, "case_latch", 0.16, 1.1), 0.0, 0.7), (_ring(lib, "A4", 0.16), 0.022, 0.12),
+                              (_ring(lib, "D5", 0.2), 0.08, 0.14)])
+    return _gesture(0.3, [(_part(lib, "typewriter_carriage", 0.16), 0.0, 0.6), (_ring(lib, "D5", 0.22), 0.05, 0.1)])
 
 
 def panel_close(lib, gen, variant: int) -> np.ndarray:
     """A panel closing: v1, the case's latch shutting, slowed, and metal falling D5 then A4; v2, a padded clunk and
     one low ring on D4."""
     if variant == 0:
-        return _gesture(0.3, [(_part(lib, "case_latch", 0.16, 0.9), 0.0, 0.7), (_ring(lib, "D5", 0.16), 0.02, 0.3),
-                              (_ring(lib, "A4", 0.2), 0.08, 0.35)])
-    return _gesture(0.3, [(_part(lib, "pedal_clunk", 0.16, 1.1), 0.0, 0.6), (_ring(lib, "D4", 0.24), 0.02, 0.25)])
+        return _gesture(0.3, [(_part(lib, "case_latch", 0.16, 0.9), 0.0, 0.7), (_ring(lib, "D5", 0.16), 0.02, 0.12),
+                              (_ring(lib, "A4", 0.2), 0.08, 0.14)])
+    return _gesture(0.3, [(_part(lib, "pedal_clunk", 0.16, 1.1), 0.0, 0.6), (_ring(lib, "D4", 0.24), 0.02, 0.1)])
 
 
 # Shipped R1 cue id -> (candidate recipe, variants).
