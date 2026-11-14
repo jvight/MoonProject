@@ -3372,5 +3372,294 @@ namespace MoonProject.Art.Editor
                 temp.Dispose();
             }
         }
+
+        /// <summary>
+        /// Builds materials and prefabs and renders the 3x2 proof sheet for the three Opening Unlocks
+        /// (<c>CrateRack</c>, <c>ReflectorBeacon</c>, <c>Kit_HexAdapter</c>) beside Rover 07 in Day C and Night A
+        /// (with <c>ReflectorBeacon</c> lit by 07's headlamp at night) to <c>docs/art/concepts/unlocks/sheet.png</c>:
+        /// <c>python tools/unity_batch.py exec --project . --method MoonProject.Art.Editor.R1StoryPropsCapture.CaptureUnlocksSheet</c>
+        /// </summary>
+        public static void CaptureUnlocksSheet()
+        {
+            BatchRunner.Run(nameof(CaptureUnlocksSheet), args =>
+            {
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1StoryPropsBuilder.BuildStoryPropMaterials();
+                R1ModelBuilder.Build();
+
+                string capturesDir = Path.GetFullPath("Logs/captures/unlocks");
+                Directory.CreateDirectory(capturesDir);
+                string conceptDir = Path.GetFullPath("docs/art/concepts/unlocks");
+                Directory.CreateDirectory(conceptDir);
+
+                bool prevAsync = ShaderUtil.allowAsyncCompilation;
+                ShaderUtil.allowAsyncCompilation = false;
+                try
+                {
+                    string crateDay = Path.Combine(capturesDir, "unlocks_01_crate_rack_dayC.png");
+                    string crateNight = Path.Combine(capturesDir, "unlocks_01_crate_rack_nightA.png");
+                    string beaconDay = Path.Combine(capturesDir, "unlocks_02_reflector_beacon_dayC.png");
+                    string beaconNight = Path.Combine(capturesDir, "unlocks_02_reflector_beacon_nightA.png");
+                    string hexDay = Path.Combine(capturesDir, "unlocks_03_hex_adapter_dayC.png");
+                    string hexNight = Path.Combine(capturesDir, "unlocks_03_hex_adapter_nightA.png");
+
+                    CaptureUnlockCrateRackShot(crateDay, false);
+                    CaptureUnlockCrateRackShot(crateNight, true);
+                    CaptureUnlockReflectorBeaconShot(beaconDay, false);
+                    CaptureUnlockReflectorBeaconShot(beaconNight, true);
+                    CaptureUnlockHexAdapterShot(hexDay, false);
+                    CaptureUnlockHexAdapterShot(hexNight, true);
+
+                    string sheetPath = Path.Combine(conceptDir, "sheet.png");
+                    Compose3x2Sheet(crateDay, crateNight, beaconDay, beaconNight, hexDay, hexNight, sheetPath);
+                }
+                finally
+                {
+                    ShaderUtil.allowAsyncCompilation = prevAsync;
+                }
+
+                return true;
+            });
+        }
+
+        private static void CaptureUnlockCrateRackShot(string outPath, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+                if (!night && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(22f, -32f, 0f);
+                    RenderSettings.sun.intensity = 1.65f;
+                }
+
+                // CrateRack at (-0.65, 0, 0) angled slightly toward camera; Rover 07 at (+1.05, 0, -0.10) beside it for scale
+                GameObject rack = SpawnProp(R1StoryPropsBuilder.CrateRackPrefabPath, new Vector3(-0.62f, 0f, 0.05f), 166f, temp);
+                GameObject rover = SpawnRover07(temp, new Vector3(1.02f, 0f, -0.12f), -148f, night);
+
+                // Demonstrate separate hinged lid nodes + per-slot amber latch lamps:
+                // Slot 0 & Slot 3 closed (full) with amber latch lamps lit; Slot 1 & Slot 2 swung open (-48 deg) with lamps dark
+                Transform lid1 = rack.transform.Find("Lid_1");
+                Transform lid2 = rack.transform.Find("Lid_2");
+                if (lid1 != null)
+                {
+                    lid1.localRotation = Quaternion.Euler(-48f, 0f, 0f);
+                }
+
+                if (lid2 != null)
+                {
+                    lid2.localRotation = Quaternion.Euler(-46f, 0f, 0f);
+                }
+
+                Transform lamp1 = rack.transform.Find("LatchLamp_1");
+                Transform lamp2 = rack.transform.Find("LatchLamp_2");
+                if (lamp1 != null)
+                {
+                    SetEmission(lamp1, Color.black);
+                }
+
+                if (lamp2 != null)
+                {
+                    SetEmission(lamp2, Color.black);
+                }
+
+                if (night)
+                {
+                    AddRoverHeadlamps(rover.transform, new Vector3(-0.45f, 0.55f, 0.05f), temp);
+                }
+
+                RenderShot(
+                    new Vector3(0.12f, 1.38f, -3.15f),
+                    new Vector3(0.08f, 0.64f, 0.0f),
+                    42f,
+                    bg,
+                    outPath);
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureUnlockReflectorBeaconShot(string outPath, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+                if (!night && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(20f, -28f, 0f);
+                    RenderSettings.sun.intensity = 1.65f;
+                }
+
+                // Foreground ReflectorBeacon at (-0.48, 0, 0.10) facing camera/rover; Rover 07 beside it at (+0.82, 0, -0.35)
+                GameObject beaconLit = SpawnProp(R1StoryPropsBuilder.ReflectorBeaconPrefabPath, new Vector3(-0.48f, 0f, 0.12f), 162f, temp);
+                // Second passive beacon further back-left (-1.75, 0, 1.85) outside headlamp beam to show dull unlit state at night
+                SpawnProp(R1StoryPropsBuilder.ReflectorBeaconPrefabPath, new Vector3(-1.75f, 0f, 1.85f), 168f, temp);
+
+                GameObject rover = SpawnRover07(temp, new Vector3(0.78f, 0f, -0.32f), -132f, night);
+
+                if (night)
+                {
+                    Transform anchor = beaconLit.transform.Find("Reflector_Anchor");
+                    Vector3 aimPt = anchor != null ? anchor.position : new Vector3(-0.48f, 1.13f, 0.12f);
+                    AddRoverHeadlamps(rover.transform, aimPt, temp);
+
+                    Transform lampSocket = FindChildRecursive(rover.transform, "HeadlampSocket");
+                    Vector3 lampOrigin = lampSocket != null ? lampSocket.position : rover.transform.position + new Vector3(-0.35f, 1.15f, 0.25f);
+                    Light spot = ArtLightingPreview.NewLight(
+                        "RoverHeadlampSpotOnBeacon",
+                        LightType.Spot,
+                        new Color(1.00f, 0.86f, 0.60f, 1f),
+                        16f);
+                    spot.transform.SetPositionAndRotation(lampOrigin, Quaternion.LookRotation(aimPt - lampOrigin));
+                    spot.range = 8.0f;
+                    spot.spotAngle = 38f;
+                    spot.innerSpotAngle = 18f;
+                    spot.shadows = LightShadows.Soft;
+                    temp.Add(spot.gameObject);
+                }
+
+                RenderShot(
+                    new Vector3(0.05f, 1.24f, -2.45f),
+                    new Vector3(-0.02f, 0.72f, 0.02f),
+                    40f,
+                    bg,
+                    outPath);
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void CaptureUnlockHexAdapterShot(string outPath, bool night)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temp = new ArtLightingPreview.TemporaryObjects();
+            try
+            {
+                Color bg = SetupEnvironment(temp, night);
+                if (!night && RenderSettings.sun != null)
+                {
+                    RenderSettings.sun.transform.rotation = Quaternion.Euler(24f, -36f, 0f);
+                    RenderSettings.sun.intensity = 1.65f;
+                }
+
+                // Rover 07 angled so its right flank (+X) faces the camera, with Kit_HexAdapter mounted on BinSocket_R
+                GameObject rover = SpawnRover07(temp, new Vector3(0.18f, 0f, 0.15f), -118f, night);
+                Transform flankSocket = FindChildRecursive(rover.transform, "BinSocket_R");
+                if (flankSocket == null)
+                {
+                    flankSocket = FindChildRecursive(rover.transform, "PanniersSocket");
+                }
+
+                GameObject mountedAdapter = InstantiatePrefab(R1StoryPropsBuilder.KitHexAdapterPrefabPath, temp);
+                if (flankSocket != null)
+                {
+                    mountedAdapter.transform.SetParent(flankSocket, false);
+                    mountedAdapter.transform.localPosition = Vector3.zero;
+                    mountedAdapter.transform.localRotation = Quaternion.identity;
+                    mountedAdapter.transform.localScale = Vector3.one;
+                }
+
+                // Also place a second Kit_HexAdapter upright on a low Crate_S plinth in the foreground beside 07 for close inspection
+                SpawnProp(ArtPaths.R1ModelsFolder + "/Crates/Crate_S.prefab", new Vector3(-0.58f, 0f, -0.58f), 152f, temp);
+                GameObject displayAdapter = SpawnProp(R1StoryPropsBuilder.KitHexAdapterPrefabPath, new Vector3(-0.56f, 0.37f, -0.56f), -68f, temp);
+                displayAdapter.transform.localScale = Vector3.one;
+
+                if (night)
+                {
+                    Light padFill = ArtLightingPreview.NewLight(
+                        "ChargingFlankFill",
+                        LightType.Point,
+                        new Color(0.55f, 0.78f, 0.86f, 1f),
+                        1.8f);
+                    padFill.transform.position = new Vector3(-0.35f, 0.72f, -0.85f);
+                    padFill.range = 3.5f;
+                    padFill.shadows = LightShadows.None;
+                    temp.Add(padFill.gameObject);
+                }
+
+                RenderShot(
+                    new Vector3(-0.42f, 0.86f, -1.52f),
+                    new Vector3(-0.18f, 0.56f, -0.10f),
+                    38f,
+                    bg,
+                    outPath);
+            }
+            finally
+            {
+                temp.Dispose();
+            }
+        }
+
+        private static void Compose3x2Sheet(
+            string r0LeftPath,
+            string r0RightPath,
+            string r1LeftPath,
+            string r1RightPath,
+            string r2LeftPath,
+            string r2RightPath,
+            string outSheetPath)
+        {
+            Texture2D r0L = LoadPngTexture(r0LeftPath);
+            Texture2D r0R = LoadPngTexture(r0RightPath);
+            Texture2D r1L = LoadPngTexture(r1LeftPath);
+            Texture2D r1R = LoadPngTexture(r1RightPath);
+            Texture2D r2L = LoadPngTexture(r2LeftPath);
+            Texture2D r2R = LoadPngTexture(r2RightPath);
+            try
+            {
+                int w = r0L.width;
+                int h = r0L.height;
+                const int pad = 8;
+                int sheetW = w * 2 + pad;
+                int sheetH = h * 3 + pad * 2;
+                var sheet = new Texture2D(sheetW, sheetH, TextureFormat.RGB24, false, false);
+                try
+                {
+                    var border = new Color32(12, 14, 20, 255);
+                    var fill = new Color32[sheetW * sheetH];
+                    for (int i = 0; i < fill.Length; i++)
+                    {
+                        fill[i] = border;
+                    }
+
+                    sheet.SetPixels32(fill);
+                    // Top row (Row 0): CrateRack (Day C | Night A)
+                    sheet.SetPixels(0, (h + pad) * 2, w, h, r0L.GetPixels());
+                    sheet.SetPixels(w + pad, (h + pad) * 2, w, h, r0R.GetPixels());
+                    // Middle row (Row 1): ReflectorBeacon (Day C | Night A with 07's headlamp glint)
+                    sheet.SetPixels(0, h + pad, w, h, r1L.GetPixels());
+                    sheet.SetPixels(w + pad, h + pad, w, h, r1R.GetPixels());
+                    // Bottom row (Row 2): Kit_HexAdapter (Day C | Night A)
+                    sheet.SetPixels(0, 0, w, h, r2L.GetPixels());
+                    sheet.SetPixels(w + pad, 0, w, h, r2R.GetPixels());
+
+                    sheet.Apply(false);
+                    File.WriteAllBytes(outSheetPath, sheet.EncodeToPNG());
+                    BatchRunner.Log($"capture {outSheetPath}");
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(sheet);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(r0L);
+                UnityEngine.Object.DestroyImmediate(r0R);
+                UnityEngine.Object.DestroyImmediate(r1L);
+                UnityEngine.Object.DestroyImmediate(r1R);
+                UnityEngine.Object.DestroyImmediate(r2L);
+                UnityEngine.Object.DestroyImmediate(r2R);
+            }
+        }
     }
 }

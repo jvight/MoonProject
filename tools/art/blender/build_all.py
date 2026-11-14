@@ -237,11 +237,21 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
+    # 12. Build & export Opening Unlocks (CrateRack, ReflectorBeacon, Kit_HexAdapter)
+    import unlocks
+
+    unlocks.main(
+        [
+            "--structures-dir",
+            str(models_dir),
+            "--rover-dir",
+            str(args.rover_kits_dir),
+        ]
+    )
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
     import fauna
     fauna.main([] if "--skip-renders" in cli_args else ["--render-previews"])
-
-

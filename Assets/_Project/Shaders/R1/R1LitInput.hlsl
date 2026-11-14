@@ -59,6 +59,8 @@ CBUFFER_START(UnityPerMaterial)
     half   _DistanceFade;
     float4 _DistanceFadeRange;
     half   _NearKeep;
+    half   _RetroreflectorStrength;
+    half4  _RetroreflectorColor;
 CBUFFER_END
 
 // Where the distance fade measures from (World sets it to the view camera every frame), so shadow and depth passes

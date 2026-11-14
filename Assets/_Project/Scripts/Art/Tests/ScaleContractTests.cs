@@ -95,6 +95,9 @@ namespace MoonProject.Art.Tests
             ("survey_drone.json", "Fauna/SurveyDrone.fbx"),
             ("trencher.json", "Fauna/Trencher.fbx"),
             ("prop_spare_igniter.json", "Props/Prop_SpareIgniter.fbx"),
+            ("crate_rack.json", "Structures/CrateRack.fbx"),
+            ("reflector_beacon.json", "Structures/ReflectorBeacon.fbx"),
+            ("kit_hex_adapter.json", "Rover/Kit_HexAdapter.fbx"),
         };
 
         [Serializable]
@@ -242,6 +245,123 @@ namespace MoonProject.Art.Tests
             Renderer talusRenderer = talusPrefab.GetComponentInChildren<Renderer>();
             Assert.IsNotNull(talusRenderer);
             Assert.AreEqual(R1MaterialLibrary.RockfallTalusMaterialName, talusRenderer.sharedMaterial.name);
+        }
+
+        [Test]
+        public void CrateRack_HasSalvagedCratesSeparateLidsLatchLampsWeldBeadsAndVisDecals()
+        {
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.CrateRackPrefabPath);
+            Assert.IsNotNull(prefab.GetComponent<BoxCollider>(), "CrateRack must have a BoxCollider.");
+
+            string[] requiredNodes =
+            {
+                "Frame", "Crate_0", "Crate_1", "Crate_2",
+                "Lid_0", "Lid_1", "Lid_2", "Lid_3",
+                "LatchLamp_0", "LatchLamp_1", "LatchLamp_2", "LatchLamp_3",
+                "WeldBeads", "Tag_07",
+                "Decal_VIS_1", "Decal_VIS_2", "Decal_VIS_3",
+                "Slot_0", "Slot_1", "Slot_2", "Slot_3",
+            };
+            for (int i = 0; i < requiredNodes.Length; i++)
+            {
+                Assert.IsNotNull(prefab.transform.Find(requiredNodes[i]), $"CrateRack is missing child node '{requiredNodes[i]}'.");
+            }
+
+            var usedMaterials = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Renderer r in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m, $"Null material on CrateRack/{r.name}.");
+                    usedMaterials.Add(m.name);
+                }
+            }
+
+            Assert.IsTrue(usedMaterials.Contains(R1MaterialRecipes.CreamEnamelSlot), "CrateRack frame must use R1_CreamEnamel.");
+            Assert.IsTrue(usedMaterials.Contains(R1MaterialRecipes.WhitePaintSlot), "CrateRack salvaged VIS crates must use R1_WhitePaint.");
+            Assert.IsTrue(usedMaterials.Contains(R1MaterialRecipes.LampAmberSlot), "CrateRack latch lamps must use R1_LampAmber.");
+            Assert.IsTrue(usedMaterials.Contains(R1StoryPropsBuilder.MakerDecalMaterialName), "CrateRack VIS decals must use M_R1_MakerDecal.");
+
+            for (int i = 0; i < 4; i++)
+            {
+                Transform lid = prefab.transform.Find($"Lid_{i}");
+                MeshFilter mf = lid.GetComponent<MeshFilter>();
+                Assert.IsNotNull(mf);
+                Assert.Greater(mf.sharedMesh.vertexCount, 20, $"Lid_{i} must have its own lid geometry.");
+            }
+        }
+
+        [Test]
+        public void ReflectorBeacon_IsPassiveWithSingleCornerCubeAndCoralBand()
+        {
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.ReflectorBeaconPrefabPath);
+            Assert.IsNotNull(prefab.GetComponent<BoxCollider>(), "ReflectorBeacon must have a BoxCollider.");
+
+            string[] requiredNodes =
+            {
+                "FootSpikes", "Post", "CapHousing", "CornerCube", "WeldBeads", "Tag_07", "Reflector_Anchor",
+            };
+            for (int i = 0; i < requiredNodes.Length; i++)
+            {
+                Assert.IsNotNull(prefab.transform.Find(requiredNodes[i]), $"ReflectorBeacon is missing child node '{requiredNodes[i]}'.");
+            }
+
+            Transform cornerCube = prefab.transform.Find("CornerCube");
+            Renderer ccRenderer = cornerCube.GetComponent<Renderer>();
+            Assert.IsNotNull(ccRenderer);
+            Assert.IsNotNull(ccRenderer.sharedMaterial);
+            Assert.AreEqual(R1StoryPropsBuilder.RetroreflectorPrismMaterialName, ccRenderer.sharedMaterial.name);
+            Assert.AreEqual(0f, ccRenderer.sharedMaterial.GetFloat("_EmissionStrength"), 1e-5f,
+                "ReflectorBeacon CornerCube must be passive (_EmissionStrength == 0) when unlit.");
+            Assert.Greater(ccRenderer.sharedMaterial.GetFloat("_RetroreflectorStrength"), 0.5f,
+                "ReflectorBeacon CornerCube must have positive _RetroreflectorStrength to return 07's headlamp glint at night.");
+            Assert.Less(ccRenderer.sharedMaterial.GetFloat("_BloomSafeMax"), Palette.BloomThreshold,
+                "ReflectorBeacon CornerCube glint must stay strictly below Palette.BloomThreshold (no bloom abuse).");
+
+            foreach (Renderer r in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    Assert.IsNotNull(m);
+                    Assert.AreNotEqual(R1MaterialRecipes.LampAmberSlot, m.name,
+                        "ReflectorBeacon is passive and must not use an active R1_LampAmber material.");
+                    if (m.HasProperty("_EmissionStrength"))
+                    {
+                        Assert.AreEqual(0f, m.GetFloat("_EmissionStrength"), 1e-5f,
+                            $"ReflectorBeacon material '{m.name}' on '{r.name}' must have zero self-emission.");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void KitHexAdapter_FitsRoverFlankSocket_AndUsesTychoMaterialsAndRimGlow()
+        {
+            GameObject prefab = MeshChecks.LoadGeneratedPrefab(R1StoryPropsBuilder.KitHexAdapterPrefabPath);
+            string[] requiredNodes =
+            {
+                "HexPlate", "ContactHex", "RimGlow", "WeldBeads", "Tag_07", "Decal_Tycho_1",
+            };
+            for (int i = 0; i < requiredNodes.Length; i++)
+            {
+                Assert.IsNotNull(prefab.transform.Find(requiredNodes[i]), $"Kit_HexAdapter is missing child node '{requiredNodes[i]}'.");
+            }
+
+            Renderer rimRenderer = prefab.transform.Find("RimGlow").GetComponent<Renderer>();
+            Assert.IsNotNull(rimRenderer);
+            Assert.AreEqual(R1StoryPropsBuilder.HexAdapterRimTealMaterialName, rimRenderer.sharedMaterial.name);
+            Assert.Less(rimRenderer.sharedMaterial.GetFloat("_BloomSafeMax"), Palette.BloomThreshold,
+                "Kit_HexAdapter RimGlow must be bloom-safe.");
+
+            Renderer decalRenderer = prefab.transform.Find("Decal_Tycho_1").GetComponent<Renderer>();
+            Assert.IsNotNull(decalRenderer);
+            Assert.AreEqual(R1StoryPropsBuilder.MakerDecalMaterialName, decalRenderer.sharedMaterial.name);
+
+            Bounds localBounds = MeshChecks.PrefabBounds(prefab, Matrix4x4.identity);
+            Assert.AreEqual(0f, localBounds.min.x, 0.004f,
+                "Kit_HexAdapter inner mounting face must sit at x=0 in local kit space so it mounts flush on 07's flank socket.");
+            Assert.Greater(localBounds.max.x, 0.035f,
+                "Kit_HexAdapter must extend outboard along +X from its mounting face.");
         }
 
         private static Bounds MeasureInstantiatedRendererBounds(GameObject prefab)

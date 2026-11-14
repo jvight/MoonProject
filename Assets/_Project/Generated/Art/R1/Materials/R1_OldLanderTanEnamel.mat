@@ -67,6 +67,7 @@ Material:
     - _MetallicScale: 0.06
     - _NearKeep: 1
     - _OcclusionStrength: 1
+    - _RetroreflectorStrength: 0
     - _ScanProgress: 0
     - _SmoothnessMax: 0.28
     - _SmoothnessMin: 0.12
@@ -79,5 +80,6 @@ Material:
     - _DustColor: {r: 0.58, g: 0.54, b: 0.48, a: 1}
     - _EdgeWearColor: {r: 0.46, g: 0.35, b: 0.24, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _RetroreflectorColor: {r: 1, g: 0.9, b: 0.65999997, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

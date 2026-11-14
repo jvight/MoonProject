@@ -41,6 +41,8 @@ namespace MoonProject.Art.Editor
         public const string BootprintTrailMaterialName = "R1_BootprintTrail";
         public const string MakerDecalMaterialName = "M_R1_MakerDecal";
         public const string SpareIgniterBrassMaterialName = "R1_SpareIgniterBrass";
+        public const string RetroreflectorPrismMaterialName = "R1_RetroreflectorPrism";
+        public const string HexAdapterRimTealMaterialName = "R1_HexAdapterRimTeal";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -62,6 +64,8 @@ namespace MoonProject.Art.Editor
         public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
         public const string MakerDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MakerDecalMaterialName + ".mat";
         public const string SpareIgniterBrassMaterialPath = ArtPaths.R1MaterialsFolder + "/" + SpareIgniterBrassMaterialName + ".mat";
+        public const string RetroreflectorPrismMaterialPath = ArtPaths.R1MaterialsFolder + "/" + RetroreflectorPrismMaterialName + ".mat";
+        public const string HexAdapterRimTealMaterialPath = ArtPaths.R1MaterialsFolder + "/" + HexAdapterRimTealMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -112,6 +116,9 @@ namespace MoonProject.Art.Editor
         public const string GeophonePlugPrefabPath = PropsModelsFolder + "/Geophone_Plug.prefab";
         public const string PropGeophoneLinePrefabPath = PropsModelsFolder + "/Prop_GeophoneLine.prefab";
         public const string PropSpareIgniterPrefabPath = PropsModelsFolder + "/Prop_SpareIgniter.prefab";
+        public const string CrateRackPrefabPath = ArtPaths.R1ModelsFolder + "/Structures/CrateRack.prefab";
+        public const string ReflectorBeaconPrefabPath = ArtPaths.R1ModelsFolder + "/Structures/ReflectorBeacon.prefab";
+        public const string KitHexAdapterPrefabPath = ArtPaths.R1ModelsFolder + "/Rover/Kit_HexAdapter.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -477,6 +484,45 @@ namespace MoonProject.Art.Editor
             spareIgniterBrass.SetFloat("_HotCorePeak", 0.96f);
             spareIgniterBrass.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             GeneratedAssets.CreateOrReplace(spareIgniterBrass, SpareIgniterBrassMaterialPath);
+
+            // 19. R1_RetroreflectorPrism: passive trihedral corner-cube retroreflector (dull when unlit;
+            //     returns a sharp, bloom-safe warm star glint when 07's headlamp hits it at night)
+            Material retroPrismMat = R1MaterialLibrary.CreateMaterial(r1Lit, bareSteelSpec);
+            retroPrismMat.name = RetroreflectorPrismMaterialName;
+            retroPrismMat.SetColor("_BaseColor", new Color(0.28f, 0.31f, 0.36f, 1f));
+            retroPrismMat.SetFloat("_MetallicScale", 0.65f);
+            retroPrismMat.SetFloat("_SmoothnessMin", 0.72f);
+            retroPrismMat.SetFloat("_SmoothnessMax", 0.94f);
+            retroPrismMat.SetColor("_EdgeWearColor", new Color(0.76f, 0.80f, 0.86f, 1f));
+            retroPrismMat.SetFloat("_EdgeWearAmount", 0.65f);
+            retroPrismMat.SetFloat("_EdgeWearSmoothness", 0.92f);
+            retroPrismMat.SetFloat("_DustAmount", 0.08f);
+            retroPrismMat.SetTexture("_EmissionMap", null);
+            retroPrismMat.SetColor("_EmissionColor", Color.black);
+            retroPrismMat.SetFloat("_EmissionStrength", 0.0f);
+            retroPrismMat.SetFloat("_BloomSafeMax", 0.96f);
+            retroPrismMat.SetFloat("_HotCorePeak", 0.96f);
+            retroPrismMat.SetFloat("_RetroreflectorStrength", 1.35f);
+            retroPrismMat.SetColor("_RetroreflectorColor", new Color(1.00f, 0.88f, 0.56f, 1f));
+            retroPrismMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(retroPrismMat, RetroreflectorPrismMaterialPath);
+
+            // 20. R1_HexAdapterRimTeal: soft muted Tycho teal rim light for Kit_HexAdapter when charging (bloom-safe)
+            R1MaterialSpec tealSpec = R1MaterialRecipes.Get(R1MaterialSlot.TealMark);
+            Material hexRimTealMat = R1MaterialLibrary.CreateMaterial(r1Lit, tealSpec);
+            hexRimTealMat.name = HexAdapterRimTealMaterialName;
+            hexRimTealMat.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            hexRimTealMat.SetColor("_BaseColor", new Color(0.22f, 0.54f, 0.56f, 1f));
+            hexRimTealMat.SetTexture("_EmissionMap", Texture2D.whiteTexture);
+            hexRimTealMat.SetColor("_EmissionColor", new Color(0.26f, 0.82f, 0.84f, 1f));
+            hexRimTealMat.SetFloat("_EmissionStrength", 0.58f);
+            hexRimTealMat.SetFloat("_BloomSafeMax", 0.72f);
+            hexRimTealMat.SetFloat("_HotCoreThreshold", 0.99f);
+            hexRimTealMat.SetFloat("_HotCorePeak", 0.72f);
+            hexRimTealMat.SetFloat("_DustAmount", 0.06f);
+            hexRimTealMat.SetFloat("_EdgeWearAmount", 0.10f);
+            hexRimTealMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            GeneratedAssets.CreateOrReplace(hexRimTealMat, HexAdapterRimTealMaterialPath);
         }
 
         /// <summary>
@@ -623,6 +669,19 @@ namespace MoonProject.Art.Editor
 
                     renderers[i].sharedMaterials = mats;
                 }
+            }
+            else if (modelPath.EndsWith("/CrateRack.fbx", StringComparison.Ordinal))
+            {
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/ReflectorBeacon.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "CornerCube", R1MaterialRecipes.BareSteelSlot, LoadOrBuildMaterial(RetroreflectorPrismMaterialPath));
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Kit_HexAdapter.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "RimGlow", R1MaterialRecipes.TealMarkSlot, LoadOrBuildMaterial(HexAdapterRimTealMaterialPath));
             }
 
             ApplyMakerDecalOverrides(root);

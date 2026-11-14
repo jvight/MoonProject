@@ -326,6 +326,35 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     surfaceData.clearCoatSmoothness = 0.0h;
 
     half4 color = UniversalFragmentPBR(inputData, surfaceData);
+    if (_RetroreflectorStrength > 0.001h)
+    {
+        float2 retroUv = (uv - 0.5) * 2.6;
+        float retroR = length(retroUv);
+        float retroAng = atan2(retroUv.y, retroUv.x);
+        half apexCore = (half)exp(-retroR * retroR * 4.2);
+        half starRays = (half)(pow(abs(cos(1.5 * retroAng - 0.785398)), 5.0) * exp(-retroR * 1.45) * smoothstep(1.18, 0.08, retroR));
+        half facetBowl = (half)smoothstep(1.15, 0.15, retroR);
+        half retroShape = saturate(0.32h * facetBowl + 0.68h * max(apexCore, starRays));
+
+        half3 lampAccum = half3(0.0h, 0.0h, 0.0h);
+    #if defined(_ADDITIONAL_LIGHTS)
+        uint pixelLightCount = GetAdditionalLightsCount();
+        LIGHT_LOOP_BEGIN(pixelLightCount)
+            Light addLight = GetAdditionalLight(lightIndex, inputData.positionWS, half4(1, 1, 1, 1));
+            half atten = addLight.distanceAttenuation * addLight.shadowAttenuation;
+            half facetCatch = saturate(dot(finalNormalWS, addLight.direction) * 0.75h + 0.35h);
+            lampAccum += addLight.color * (atten * facetCatch);
+        LIGHT_LOOP_END
+    #endif
+        half lampLuma = max(lampAccum.r, max(lampAccum.g, lampAccum.b));
+        if (lampLuma > 1e-4h)
+        {
+            half gain = saturate(lampLuma * 2.8h) * _RetroreflectorStrength;
+            half3 glintTint = lerp(_RetroreflectorColor.rgb, half3(1.0h, 0.96h, 0.86h), apexCore * 0.55h);
+            half3 retroGlint = glintTint * (retroShape * gain);
+            color.rgb = max(color.rgb, min(color.rgb + retroGlint, half3(_BloomSafeMax, _BloomSafeMax, _BloomSafeMax)));
+        }
+    }
     R1ApplyBuildEffect(color.rgb, input.positionWS, finalNormalWS, vcol.g);
     MoonApplySurfaceScan(color.rgb, input.positionWS, finalNormalWS, vcol.g, _ScanProgress, _Dissolve);
     color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);

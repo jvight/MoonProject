@@ -66,6 +66,10 @@ Shader "MoonProject/R1/Lit"
         _BuildStageHeat("Build Stage Seam Heat", Range(0.0, 1.0)) = 0.0
         _BuildBoundsY("Build World Y Bounds", Vector) = (0, 2, 0, 0)
         _BuildSeamPointWS("Build Seam Focus Point WS", Vector) = (0, 0, 0, 0.6)
+
+        [Header(Passive Corner Cube Retroreflector)]
+        _RetroreflectorStrength("Corner Cube Retroreflector Strength", Range(0.0, 2.0)) = 0.0
+        _RetroreflectorColor("Corner Cube Glint Color", Color) = (1.0, 0.90, 0.66, 1.0)
     }
 
     SubShader

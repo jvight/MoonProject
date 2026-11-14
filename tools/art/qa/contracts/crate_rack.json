@@ -1,0 +1,197 @@
+{
+  "model": "crate_rack",
+  "pivot_tolerance": 0.015,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_Signage",
+    "R1_WhitePaint"
+  ],
+  "max_triangles": 9000,
+  "max_meshes": 24,
+  "max_draw_calls": 60,
+  "allow_rotation": [
+    "Lid_*"
+  ],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "CrateRack": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Frame": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Crate_0": {
+      "pivot": [
+        -0.39,
+        0.04,
+        0.31
+      ]
+    },
+    "Crate_1": {
+      "pivot": [
+        0.39,
+        0.04,
+        0.31
+      ]
+    },
+    "Crate_2": {
+      "pivot": [
+        0.0,
+        -0.05,
+        0.79
+      ]
+    },
+    "Lid_0": {
+      "pivot": [
+        -0.39,
+        -0.26,
+        0.48
+      ]
+    },
+    "Lid_1": {
+      "pivot": [
+        0.39,
+        -0.26,
+        0.48
+      ]
+    },
+    "Lid_2": {
+      "pivot": [
+        -0.36,
+        -0.34,
+        0.96
+      ]
+    },
+    "Lid_3": {
+      "pivot": [
+        0.36,
+        -0.34,
+        0.96
+      ]
+    },
+    "LatchLamp_0": {
+      "pivot": [
+        -0.2164,
+        0.358,
+        0.442
+      ]
+    },
+    "LatchLamp_1": {
+      "pivot": [
+        0.5636,
+        0.358,
+        0.442
+      ]
+    },
+    "LatchLamp_2": {
+      "pivot": [
+        -0.178,
+        0.258,
+        0.922
+      ]
+    },
+    "LatchLamp_3": {
+      "pivot": [
+        0.542,
+        0.258,
+        0.922
+      ]
+    },
+    "WeldBeads": {
+      "pivot": [
+        0.0,
+        0.15,
+        0.55
+      ]
+    },
+    "Tag_07": {
+      "pivot": [
+        -0.75,
+        0.402,
+        0.52
+      ]
+    },
+    "Decal_VIS_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Decal_VIS_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Decal_VIS_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Slot_0": {
+      "pivot": [
+        -0.39,
+        0.04,
+        0.3
+      ]
+    },
+    "Slot_1": {
+      "pivot": [
+        0.39,
+        0.04,
+        0.3
+      ]
+    },
+    "Slot_2": {
+      "pivot": [
+        -0.36,
+        -0.05,
+        0.78
+      ]
+    },
+    "Slot_3": {
+      "pivot": [
+        0.36,
+        -0.05,
+        0.78
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.6,
+      0.9,
+      1.2
+    ],
+    "tolerance": 0.06,
+    "min_size": [
+      1.54,
+      0.84,
+      1.14
+    ],
+    "max_size": [
+      1.66,
+      0.96,
+      1.26
+    ]
+  }
+}
